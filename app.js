@@ -98,6 +98,7 @@ const Store = {
     { date:'2026-11-08', name:'Deepavali',                 country:'Singapore' },
     { date:'2026-11-09', name:'Deepavali (Observed)',      country:'Singapore' },
     { date:'2026-12-25', name:'Christmas Day',             country:'Singapore' },
+    { date:'2027-01-01', name:"New Year's Day",           country:'Singapore' },
   ],
   timesheets: [],
   nextId: { user:72, ts:200, entry:1000 }
@@ -218,8 +219,13 @@ function bootApp() {
   goTo(me.role==='tech' ? 'timesheet' : 'approvals');
 }
 
+// Users that can have employees assigned to them (Level 2 managers + Aditya)
+function assignableManagers() {
+  return Store.users.filter(u => u.active && (u.role==='manager' || u.empId==='1188'));
+}
+
 function roleLabel(role) {
-  return { tech:'Level 1 · Tech', manager:'Level 2 · Manager', assistant:'Level 3 · Admin Assistant', admin:'Level 4 · Administrator' }[role] || role;
+  return { tech:'Level 1', manager:'Level 2', assistant:'Level 3', admin:'Level 4' }[role] || role;
 }
 
 function buildNav() {
@@ -344,6 +350,32 @@ function reloadTs() {
 }
 
 
+// Timesheet period: the "month" runs from the 16th of that month to the 15th of the next.
+// e.g. July = 16 July – 15 August
+function periodDates(year, month) {
+  const dates = [];
+  const startDate = new Date(year, month-1, 16);
+  const endDate   = new Date(month===12 ? year+1 : year, month===12 ? 0 : month, 15);
+  for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate()+1)) {
+    dates.push(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`);
+  }
+  return dates;
+}
+function periodLabel(year, month) {
+  const endY = month===12 ? year+1 : year;
+  const endM = month===12 ? 1 : month+1;
+  return `16 ${MONTHS[month-1]} ${year} – 15 ${MONTHS[endM-1]} ${endY}`;
+}
+// ISO calendar week number (Mon-based, week containing first Thursday = W1)
+function isoWeek(dateStr) {
+  const d = new Date(dateStr+'T00:00:00');
+  const t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  const dayNum = t.getUTCDay() || 7;
+  t.setUTCDate(t.getUTCDate() + 4 - dayNum);
+  const yearStart = new Date(Date.UTC(t.getUTCFullYear(),0,1));
+  return Math.ceil((((t - yearStart) / 86400000) + 1) / 7);
+}
+
 // All roles use the day-grid "My Timesheet" layout
 function usesDayGrid() { return true; }
 
@@ -355,13 +387,11 @@ function ensureTechMonth() {
     ts = { id:Store.nextId.ts++, userId:me.id, year:tsYear, month:tsMonth, status:'draft', submittedAt:null, approvedAt:null, approvedBy:null, rejectionComment:'', entries:[] };
     Store.timesheets.push(ts);
   }
-  const daysInMonth = new Date(tsYear, tsMonth, 0).getDate();
-  for (let d=1; d<=daysInMonth; d++) {
-    const dateStr = `${tsYear}-${String(tsMonth).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+  periodDates(tsYear, tsMonth).forEach(dateStr => {
     if (!ts.entries.some(e => e.date === dateStr)) {
       ts.entries.push({ id:Store.nextId.entry++, date:dateStr, customer:'', workHrs:0, sbHrs:0, sbType:'Standby', description:'', country:'', equipment:'', allowances:[], ot15:0, ot20:0, nightHrs:0, nightOtHrs:0, mealLunch:0, mealDinner:0, tpFrom:'', tpTo:'', tpPre:'', shiftAllowance:'', remarks:'' });
     }
-  }
+  });
   ts.entries.sort((a,b) => (a.date||'').localeCompare(b.date||''));
   recalcTs(ts);
   return ts;
@@ -371,9 +401,10 @@ function ensureTechMonth() {
 function renderPhLegend() {
   const el = $('ts-ph-legend');
   if (!el) return;
-  const mm = String(tsMonth).padStart(2,'0');
+  const range = periodDates(tsYear, tsMonth);
+  const from = range[0], to = range[range.length-1];
   const hols = Store.publicHolidays
-    .filter(h => h.date.startsWith(`${tsYear}-${mm}`))
+    .filter(h => h.date >= from && h.date <= to)
     .sort((a,b)=>a.date.localeCompare(b.date));
   if (!hols.length) { el.innerHTML=''; return; }
   el.innerHTML = `<span class="ts-ph-legend-title">Public Holidays</span>` +
@@ -385,7 +416,7 @@ function loadTs() {
   const editable = !ts || ts.status==='draft' || ts.status==='rejected';
   const locked   = ts && (ts.status==='submitted' || ts.status==='approved');
 
-  $('ts-title').textContent = `${MONTHS[tsMonth-1]} ${tsYear}`;
+  $('ts-title').innerHTML = `${MONTHS[tsMonth-1]} ${tsYear} <span style="font-weight:600;font-size:0.8rem;color:var(--text-secondary);margin-left:0.6rem">Period: ${periodLabel(tsYear, tsMonth)}</span>`;
   renderPhLegend();
   renderTsActions(ts, editable);
   renderTsSummary(ts);
@@ -1063,7 +1094,7 @@ function exportExcel(tsId) {
   const t = reviewTotals(ts);
   let html = `<html xmlns:x="urn:schemas-microsoft-com:office:excel"><head><meta charset="UTF-8"></head><body>`;
   html += `<table border="1">`;
-  html += `<tr><td colspan="19"><b>BHS Kinetic — Timesheet · ${esc(u?.name)} (${esc(u?.empId)}) · ${MONTHS[ts.month-1]} ${ts.year} · Status: ${esc(ts.status.toUpperCase())}</b></td></tr>`;
+  html += `<tr><td colspan="19"><b>BHS Kinetic — Timesheet · ${esc(u?.name)} (${esc(u?.empId)}) · ${MONTHS[ts.month-1]} ${ts.year} (${periodLabel(ts.year, ts.month)}) · Status: ${esc(ts.status.toUpperCase())}</b></td></tr>`;
   html += `<tr><td colspan="19">Deployed: ${fmt(t.dep)}h · Standby: ${fmt(t.sb)}h · OT1.5: ${fmt(t.o15)}h · OT2.0: ${fmt(t.o20)}h</td></tr>`;
   html += `<tr>${head.map(h=>`<th><b>${h}</b></th>`).join('')}</tr>`;
   rows.forEach(r=>{ html += `<tr>${r.map(c=>`<td>${esc(c)}</td>`).join('')}</tr>`; });
@@ -1098,7 +1129,7 @@ function openPrintTab(tsId) {
     <div class="page-wrap">
       <div class="sec-header">
         <div class="sec-title"><h1>${u?.name} <span style="font-weight:500;font-size:1rem;color:var(--text-secondary)">(${u?.empId})</span></h1>
-        <p>${MONTHS[ts.month-1]} ${ts.year} · Status: ${ts.status.toUpperCase()}</p></div>
+        <p>${MONTHS[ts.month-1]} ${ts.year} · Period: ${periodLabel(ts.year, ts.month)} · Status: ${ts.status.toUpperCase()}</p></div>
       </div>
       <div class="ts-meta-row">
         <div class="ts-meta-item"><div class="ts-meta-val">${fmt(t.dep)}h</div><div class="ts-meta-lbl">Deployed</div></div>
@@ -1148,14 +1179,12 @@ function openPrintTab(tsId) {
 function openReviewTab(tsId) {
   const ts = Store.timesheets.find(t=>t.id===tsId);
   if (!ts) return;
-  // Fill any missing days so the review mirrors the tech's full-month grid (any month, any year)
-  const daysInMonth = new Date(ts.year, ts.month, 0).getDate();
-  for (let d=1; d<=daysInMonth; d++) {
-    const dateStr = `${ts.year}-${String(ts.month).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+  // Fill any missing days so the review mirrors the employee's period grid (16th → 15th)
+  periodDates(ts.year, ts.month).forEach(dateStr => {
     if (!ts.entries.some(e => e.date === dateStr)) {
       ts.entries.push({ id:Store.nextId.entry++, date:dateStr, customer:'', workHrs:0, sbHrs:0, sbType:'Standby', description:'', country:'', equipment:'', allowances:[], ot15:0, ot20:0, nightHrs:0, nightOtHrs:0, mealLunch:0, mealDinner:0, tpFrom:'', tpTo:'', tpPre:'', shiftAllowance:'', remarks:'' });
     }
-  }
+  });
   ts.entries.sort((a,b) => (a.date||'').localeCompare(b.date||''));
   recalcTs(ts);
 
@@ -1173,7 +1202,7 @@ function openReviewTab(tsId) {
     </head><body style="background:var(--bg)">
     <div class="page-wrap">
       <div class="sec-header">
-        <div class="sec-title"><h1>${u?.name}</h1><p>${MONTHS[ts.month-1]} ${ts.year} · Timesheet Review</p></div>
+        <div class="sec-title"><h1>${u?.name}</h1><p>${MONTHS[ts.month-1]} ${ts.year} · Period: ${periodLabel(ts.year, ts.month)} · Timesheet Review</p></div>
         <div class="sec-actions">
           <button class="btn btn-danger" id="rv-reject">❌ Reject</button>
           <button class="btn btn-success" id="rv-approve">✅ Approve</button>
@@ -1181,7 +1210,7 @@ function openReviewTab(tsId) {
       </div>
       <div class="ts-meta-row">
         <div class="ts-meta-item"><div class="ts-meta-val">${u?.name}</div><div class="ts-meta-lbl">Employee</div></div>
-        <div class="ts-meta-item"><div class="ts-meta-val">${MONTHS[ts.month-1]} ${ts.year}</div><div class="ts-meta-lbl">Period</div></div>
+        <div class="ts-meta-item"><div class="ts-meta-val" style="font-size:0.85rem">${periodLabel(ts.year, ts.month)}</div><div class="ts-meta-lbl">Period</div></div>
         <div class="ts-meta-item"><div class="ts-meta-val" id="rv-t-dep">${fmt(t.dep)}h</div><div class="ts-meta-lbl">Deployed</div></div>
         <div class="ts-meta-item"><div class="ts-meta-val" id="rv-t-sb">${fmt(t.sb)}h</div><div class="ts-meta-lbl">Standby</div></div>
         <div class="ts-meta-item"><div class="ts-meta-val" id="rv-t-15" style="color:var(--ot15)">${fmt(t.o15)}h</div><div class="ts-meta-lbl">OT 1.5×</div></div>
@@ -1298,10 +1327,11 @@ function renderAnalytics(el) {
   anMonthChanged();
 }
 
-// Week-of-month for a date string (W1 = 1st–7th, W2 = 8th–14th, …)
-function weekOfMonth(dateStr) {
-  const day = parseInt(dateStr.slice(8,10), 10);
-  return Math.ceil(day / 7);
+// Week within the 16th→15th period (W1 = 16th–22nd, W2 = 23rd–29th, …)
+function periodWeek(dateStr, year, month) {
+  const range = periodDates(year, month);
+  const idx = range.indexOf(dateStr);
+  return idx < 0 ? null : Math.floor(idx/7)+1;
 }
 
 function anMonthChanged() {
@@ -1313,12 +1343,12 @@ function anMonthChanged() {
   } else {
     wSel.style.display = '';
     const yF = parseInt($('an-y')?.value)||tsYear;
-    const daysInMonth = new Date(yF, mF, 0).getDate();
-    const nWeeks = Math.ceil(daysInMonth / 7);
+    const range = periodDates(yF, mF);
     let opts = '<option value="">All Weeks</option>';
-    for (let w=1; w<=nWeeks; w++) {
-      const from = (w-1)*7+1, to = Math.min(w*7, daysInMonth);
-      opts += `<option value="${w}">Week ${w} (${from}–${to})</option>`;
+    for (let i=0; i<range.length; i+=7) {
+      const w = Math.floor(i/7)+1;
+      const from = range[i], to = range[Math.min(i+6, range.length-1)];
+      opts += `<option value="${w}">Week ${w} · CW${isoWeek(from)} (${fmtD(from).slice(0,6)} – ${fmtD(to).slice(0,6)})</option>`;
     }
     wSel.innerHTML = opts;
   }
@@ -1334,8 +1364,8 @@ function redrawAnalytics() {
   if (me.role==='manager') { const team=teamUsers().map(u=>u.id); all=all.filter(t=>team.includes(t.userId)); }
   if (mF) all=all.filter(t=>t.month===mF);
   if (yF) all=all.filter(t=>t.year===yF);
-  let entries=all.flatMap(t=>t.entries.map(e=>({...e,userId:t.userId})));
-  if (mF && wF) entries = entries.filter(e=>e.date && weekOfMonth(e.date)===wF);
+  let entries=all.flatMap(t=>t.entries.map(e=>({...e,userId:t.userId,tsYear:t.year,tsMonth:t.month})));
+  if (mF && wF) entries = entries.filter(e=>e.date && periodWeek(e.date, e.tsYear, e.tsMonth)===wF);
 
   const byCountry={}, byCustomer={}, byEmp={};
   entries.forEach(e=>{
@@ -1431,10 +1461,10 @@ function renderAdmin(el) {
           <div class="f-grid-2">
             <div class="f-group"><label>User Level</label>
               <select id="nu-role">
-                <option value="tech">Level 1 · Tech</option>
-                <option value="manager">Level 2 · Manager</option>
-                <option value="assistant">Level 3 · Admin Assistant</option>
-                <option value="admin">Level 4 · Administrator</option>
+                <option value="tech">Level 1</option>
+                <option value="manager">Level 2</option>
+                <option value="assistant">Level 3</option>
+                <option value="admin">Level 4</option>
               </select>
             </div>
             <div class="f-group"><label>Team</label>
@@ -1443,7 +1473,7 @@ function renderAdmin(el) {
           </div>
           <div class="f-group"><label>Assigned Managers (for Level 1)</label>
             <div id="nu-mgrs" style="display:flex;flex-wrap:wrap;gap:0.4rem 1rem;padding:0.5rem 0.2rem">
-              ${Store.users.filter(u=>u.role==='manager').map(m=>`<label style="display:inline-flex;align-items:center;gap:0.35rem;font-size:0.85rem;cursor:pointer"><input type="checkbox" class="nu-mgr-cb" value="${m.id}"> ${m.name}</label>`).join('')}
+              ${assignableManagers().map(m=>`<label style="display:inline-flex;align-items:center;gap:0.35rem;font-size:0.85rem;cursor:pointer"><input type="checkbox" class="nu-mgr-cb" value="${m.id}"> ${m.name}</label>`).join('')}
             </div>
           </div>
         </div>
@@ -1516,17 +1546,17 @@ function adminTab(tab, btn) {
 
 function usersBody() {
   return Store.users.map(u=>{
-    const mgrs = Store.users.filter(x=>x.role==='manager');
+    const mgrs = assignableManagers();
     return `<tr>
       <td class="td-muted" style="font-size:0.8rem">${u.empId||u.id}</td>
       <td><strong>${u.name}</strong></td>
       <td class="td-muted">${u.username}</td>
       <td>
         <select class="inline-select" onchange="updateRole(${u.id},this.value)">
-          <option value="tech" ${u.role==='tech'?'selected':''}>Level 1 · Tech</option>
-          <option value="manager" ${u.role==='manager'?'selected':''}>Level 2 · Manager</option>
-          <option value="assistant" ${u.role==='assistant'?'selected':''}>Level 3 · Admin Asst</option>
-          <option value="admin" ${u.role==='admin'?'selected':''}>Level 4 · Administrator</option>
+          <option value="tech" ${u.role==='tech'?'selected':''}>Level 1</option>
+          <option value="manager" ${u.role==='manager'?'selected':''}>Level 2</option>
+          <option value="assistant" ${u.role==='assistant'?'selected':''}>Level 3</option>
+          <option value="admin" ${u.role==='admin'?'selected':''}>Level 4</option>
         </select>
       </td>
       <td>
