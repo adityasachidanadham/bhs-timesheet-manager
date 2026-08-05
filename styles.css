@@ -167,23 +167,26 @@ img { max-width: 100%; }
 .login-photo-bg {
   position: absolute;
   inset: 0;
+  /* Soft white veil over the photo keeps navy text readable (Apple hero treatment).
+     If bhs-truck.jpg is missing, the layered gradients beneath still look designed. */
   background:
-    linear-gradient(rgba(240,244,255,0.18), rgba(240,244,255,0.18)),
-    image-set(url('bhs-truck.jpg') 1x, url('bhs-truck@2x.jpg') 2x) center / cover no-repeat,
-    linear-gradient(160deg, #dfe9ff 0%, #b9cdf5 45%, #93b3ea 100%);
-  background-position: center;
-  background-size: cover;
+    linear-gradient(105deg, rgba(255,255,255,0.92) 0%, rgba(255,255,255,0.72) 42%, rgba(255,255,255,0.25) 100%),
+    image-set(url('bhs-truck.jpg') 1x, url('bhs-truck@2x.jpg') 2x) center right / cover no-repeat,
+    radial-gradient(ellipse 90% 70% at 85% 20%, rgba(31,156,216,0.18) 0%, transparent 60%),
+    radial-gradient(ellipse 80% 80% at 20% 85%, rgba(240,64,25,0.10) 0%, transparent 55%),
+    linear-gradient(160deg, #eef3fe 0%, #dbe6fb 50%, #c3d5f4 100%);
   image-rendering: -webkit-optimize-contrast;
-  filter: saturate(1.06) contrast(1.02);
+  filter: saturate(1.05);
   transform: translateZ(0);
 }
-/* Fallback for browsers without image-set */
 @supports not (background: image-set(url('x.jpg') 1x)) {
   .login-photo-bg {
     background:
-      linear-gradient(rgba(240,244,255,0.18), rgba(240,244,255,0.18)),
-      url('bhs-truck.jpg') center / cover no-repeat,
-      linear-gradient(160deg, #dfe9ff 0%, #b9cdf5 45%, #93b3ea 100%);
+      linear-gradient(105deg, rgba(255,255,255,0.92) 0%, rgba(255,255,255,0.72) 42%, rgba(255,255,255,0.25) 100%),
+      url('bhs-truck.jpg') center right / cover no-repeat,
+      radial-gradient(ellipse 90% 70% at 85% 20%, rgba(31,156,216,0.18) 0%, transparent 60%),
+      radial-gradient(ellipse 80% 80% at 20% 85%, rgba(240,64,25,0.10) 0%, transparent 55%),
+      linear-gradient(160deg, #eef3fe 0%, #dbe6fb 50%, #c3d5f4 100%);
   }
 }
 
@@ -212,17 +215,7 @@ img { max-width: 100%; }
 }
 
 .login-branding { max-width: 460px; position: relative; z-index: 1; }
-.login-glass {
-  background: rgba(255,255,255,0.55);
-  backdrop-filter: blur(28px) saturate(180%);
-  -webkit-backdrop-filter: blur(28px) saturate(180%);
-  border: 1px solid rgba(255,255,255,0.65);
-  border-radius: 24px;
-  padding: 2.6rem 2.8rem;
-  box-shadow:
-    0 8px 32px rgba(11,31,107,0.16),
-    inset 0 1px 0 rgba(255,255,255,0.85);
-}
+
 
 .login-logo-wrap {
   display: inline-flex;
@@ -242,12 +235,8 @@ img { max-width: 100%; }
   animation: fadeUp 0.8s 0.1s var(--ease-out) both;
 }
 .login-headline span {
-  color: var(--bhs-blue-mid);
+  color: #0B1F6B;
   display: block;
-  background: linear-gradient(135deg, var(--bhs-blue-mid) 0%, var(--bhs-blue-light) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
 }
 
 .login-desc {
@@ -1040,19 +1029,30 @@ img { max-width: 100%; }
 
 /* ── Analytics Charts ───────────────────────────────────────── */
 .an-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.1rem; margin-bottom: 1.25rem; }
-.an-legend { display: flex; gap: 1rem; margin-bottom: 0.9rem; }
-.an-legend-item { display: flex; align-items: center; gap: 0.35rem; font-size: 0.78rem; color: var(--text-secondary); font-weight: 500; }
-.an-legend-dot { width: 8px; height: 8px; border-radius: 2px; }
-.an-bar-item { margin-bottom: 0.9rem; }
+.an-legend { display: flex; gap: 1.25rem; margin-bottom: 1.1rem; padding: 0.55rem 0.8rem; background: var(--bg); border-radius: var(--r-sm); width: fit-content; }
+.an-legend-item { display: flex; align-items: center; gap: 0.45rem; font-size: 0.85rem; color: var(--text-primary); font-weight: 600; }
+.an-legend-dot { width: 12px; height: 12px; border-radius: 3px; }
+.an-bar-item { margin-bottom: 1.15rem; }
 .an-bar-label-row {
   display: flex; justify-content: space-between; align-items: center;
-  margin-bottom: 0.35rem;
-  font-size: 0.83rem;
+  margin-bottom: 0.45rem;
+  font-size: 0.95rem;
+  gap: 0.75rem;
+  flex-wrap: wrap;
 }
-.an-bar-name { font-weight: 500; color: var(--text-primary); }
-.an-bar-vals { display: flex; gap: 0.4rem; }
+.an-bar-name { font-weight: 700; color: var(--text-primary); font-size: 0.95rem; }
+.an-bar-vals { display: flex; gap: 0.45rem; align-items: center; }
+.an-bar-vals .ot-tag { font-size: 0.82rem; padding: 0.24rem 0.6rem; }
+.an-bar-total {
+  font-size: 0.9rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+  min-width: 46px;
+  text-align: right;
+}
 .an-track {
-  height: 8px;
+  height: 14px;
   background: var(--bg);
   border-radius: 99px;
   overflow: hidden;
@@ -1299,7 +1299,7 @@ img { max-width: 100%; }
     border-right: none;
     border-bottom: 1px solid rgba(37,99,235,0.10);
   }
-  .login-glass { padding: 1.6rem 1.8rem; max-width: 360px; }
+  .login-branding { max-width: 360px; }
   .bhs-logo-login { height: 96px; }
   .login-headline { font-size: 1.7rem; margin-bottom: 0; }
   .login-right { width: 100%; padding: 2rem 1.25rem 3rem; }
@@ -1307,7 +1307,6 @@ img { max-width: 100%; }
 }
 @media (max-width: 480px) {
   .login-left { min-height: 240px; padding: 1.8rem 1rem; }
-  .login-glass { padding: 1.2rem 1.4rem; }
   .bhs-logo-login { height: 80px; }
   .login-headline { font-size: 1.4rem; }
   .login-corner-stripes { height: 14px; top: 0.8rem; left: 1rem; }
@@ -1451,13 +1450,13 @@ td.tsx-act-cell { width: 100%; }
 
 /* ── BUILD-IT badge next to nav logo ────────────────────────── */
 .nav-buildit {
-  margin-left: 0.6rem;
-  padding: 0.22rem 0.6rem;
-  background: linear-gradient(135deg, var(--bhs-blue-mid), var(--bhs-blue));
-  color: #fff;
-  font-size: 0.66rem;
-  font-weight: 800;
-  letter-spacing: 0.1em;
-  border-radius: var(--r-xs);
+  margin-left: 0.65rem;
+  font-family: 'Arial Black', Arial, Helvetica, sans-serif;
+  font-size: 0.78rem;
+  font-weight: 900;
+  font-style: italic;
+  letter-spacing: 0.14em;
+  color: #0B1F6B;
   white-space: nowrap;
+  transform: skewX(-6deg);
 }
