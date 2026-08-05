@@ -12,7 +12,7 @@ const Store = {
     { id:7, empId:'3333', name:'Admin 3333', username:'3333', password:'3333', role:'admin', team:null, managerIds:[], active:true },
     { id:2, empId:'1188', name:'Aditya', username:'1188', password:'1188', role:'admin', team:null, managerIds:[], assignable:true, active:true },
     { id:3, empId:'0061', name:'Kevin Lee Kok Meng', username:'0061', password:'0061', role:'manager', team:null, managerIds:[], active:true },
-    { id:4, empId:'0044', name:'Lim Khan Yee', username:'0044', password:'0044', role:'manager', team:null, managerIds:[], active:true },
+    { id:4, empId:'0044', name:'Lim Khan Yee (Xing)', username:'0044', password:'0044', role:'manager', team:null, managerIds:[], active:true },
     { id:10, empId:'0021', name:'Khoo Gim Soon Adrian', username:'0021', password:'0021', role:'tech', team:'AMHS', managerIds:[3,4], active:true },
     { id:11, empId:'0056', name:'Cho Yong Kiong', username:'0056', password:'0056', role:'tech', team:'AMHS', managerIds:[3,4], active:true },
     { id:12, empId:'0496', name:'Langh Biak Lian', username:'0496', password:'0496', role:'tech', team:'AMHS', managerIds:[3,4], active:true },
@@ -222,13 +222,6 @@ function bootApp() {
 function assignableManagers() {
   return Store.users.filter(u => u.active && (u.role==='manager' || u.assignable===true));
 }
-function toggleAssignable(id) {
-  const u = Store.users.find(x=>x.id===id); if (!u) return;
-  u.assignable = !u.assignable;
-  toast(`${u.name} ${u.assignable?'added to':'removed from'} Assigned Managers list`,'success');
-  $('utbody').innerHTML = usersBody();
-}
-
 function roleLabel(role) {
   return { tech:'Level 1', manager:'Level 2', assistant:'Level 3', admin:'Level 4' }[role] || role;
 }
@@ -866,7 +859,7 @@ function openPrintTab(tsId) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <base href="${document.baseURI}">
     <title>Timesheet — ${u?.name} · ${MONTHS[ts.month-1]} ${ts.year}</title>
-    <link rel="stylesheet" href="styles.css?v=17">
+    <link rel="stylesheet" href="styles.css?v=18">
     </head><body style="background:#fff">
     <div class="page-wrap">
       <div class="sec-header">
@@ -940,7 +933,7 @@ function openReviewTab(tsId) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <base href="${document.baseURI}">
     <title>Review — ${u?.name} · ${MONTHS[ts.month-1]} ${ts.year}</title>
-    <link rel="stylesheet" href="styles.css?v=17">
+    <link rel="stylesheet" href="styles.css?v=18">
     </head><body style="background:var(--bg)">
     <div class="page-wrap">
       <div class="sec-header">
@@ -1292,71 +1285,114 @@ function adminTab(tab, btn) {
 
 function usersBody() {
   return Store.users.map(u=>{
-    const mgrs = assignableManagers();
+    const mgrNames = (u.role==='tech' && (u.managerIds||[]).length)
+      ? u.managerIds.map(mid=>userBy(mid)?.name).filter(Boolean).join(', ')
+      : '<span class="td-muted">–</span>';
     return `<tr>
       <td class="td-muted" style="font-size:0.8rem">${u.empId||u.id}</td>
       <td><strong>${u.name}</strong></td>
       <td class="td-muted">${u.username}</td>
-      <td>
-        <select class="inline-select" onchange="updateRole(${u.id},this.value)">
-          <option value="tech" ${u.role==='tech'?'selected':''}>Level 1</option>
-          <option value="manager" ${u.role==='manager'?'selected':''}>Level 2</option>
-          <option value="assistant" ${u.role==='assistant'?'selected':''}>Level 3</option>
-          <option value="admin" ${u.role==='admin'?'selected':''}>Level 4</option>
-        </select>
-      </td>
-      <td>
-        <select class="inline-select" onchange="updateTeam(${u.id},this.value)">
-          <option value="">–</option>
-          ${Store.teams.map(t=>`<option value="${t}" ${u.team===t?'selected':''}>${t}</option>`).join('')}
-        </select>
-      </td>
-      <td>${u.role==='tech'
-        ? mgrs.map(m=>`<label style="display:inline-flex;align-items:center;gap:0.25rem;font-size:0.75rem;margin-right:0.6rem;cursor:pointer;white-space:nowrap">
-            <input type="checkbox" ${(u.managerIds||[]).includes(m.id)?'checked':''} onchange="toggleUserMgr(${u.id},${m.id},this.checked)"> ${m.name.split(' ')[0]}</label>`).join('')
-        : '<span class="td-muted" style="font-size:0.78rem">–</span>'}</td>
+      <td><span class="pill ${u.role==='admin'?'pill-approved':(u.role==='manager'||u.role==='assistant')?'pill-submitted':'pill-draft'}" style="font-size:0.7rem">${roleLabel(u.role)}</span></td>
+      <td class="td-muted">${u.team||'–'}</td>
+      <td style="font-size:0.8rem">${mgrNames}</td>
       <td><span class="pill ${u.active?'pill-approved':'pill-rejected'}">${u.active?'Active':'Inactive'}</span></td>
       <td class="admin-actions">
-        <button class="btn btn-sm btn-ghost" onclick="editUserIds(${u.id})">Edit IDs</button>
-        <button class="btn btn-sm btn-ghost" onclick="resetPassword(${u.id})">Reset PW</button>
-        ${u.role!=='manager' ? `<button class="btn btn-sm btn-ghost" onclick="toggleAssignable(${u.id})">${u.assignable?'Unlist Mgr':'List as Mgr'}</button>` : ''}
-        <button class="btn btn-sm ${u.active?'btn-danger':'btn-success'}" onclick="toggleUser(${u.id})">${u.active?'Deactivate':'Activate'}</button>
+        <button class="edit-user-btn" onclick="openEditUser(${u.id})" title="Edit user">✏️</button>
+        <button class="edit-user-btn del-user-btn" onclick="deleteUser(${u.id})" title="Delete user">🗑️</button>
       </td>
     </tr>`;
   }).join('');
 }
-function updateRole(id,r){ const u=Store.users.find(x=>x.id===id); if(u){ u.role=r; toast(`${u.name} → ${roleLabel(r)}`,'success'); $('utbody').innerHTML=usersBody(); } }
-function updateTeam(id,t){ const u=Store.users.find(x=>x.id===id); if(u){ u.team=t||null; toast(`Team updated`,'success'); } }
-function toggleUserMgr(id, mgrId, on){
-  const u=Store.users.find(x=>x.id===id); if(!u) return;
-  if (!Array.isArray(u.managerIds)) u.managerIds=[];
-  if (on) { if(!u.managerIds.includes(mgrId)) u.managerIds.push(mgrId); }
-  else { u.managerIds=u.managerIds.filter(m=>m!==mgrId); }
-  const mgr=userBy(mgrId);
-  toast(`${u.name} ${on?'assigned to':'removed from'} ${mgr?.name}`,'success');
+
+let editingUserId = null;
+
+function openEditUser(id) {
+  const u = Store.users.find(x=>x.id===id); if (!u) return;
+  editingUserId = id;
+  let ov = $('edit-user-ov');
+  if (ov) ov.remove();
+  ov = document.createElement('div');
+  ov.className = 'overlay'; ov.id = 'edit-user-ov';
+  ov.innerHTML = `
+    <div class="modal">
+      <div class="modal-head"><h3>Edit User — ${u.name}</h3><button class="modal-x" onclick="closeOverlay('edit-user-ov')">✕</button></div>
+      <div class="modal-body">
+        <div class="f-grid-2">
+          <div class="f-group"><label>Employee ID</label><input type="text" id="eu-empid" value="${u.empId||''}"></div>
+          <div class="f-group"><label>Full Name</label><input type="text" id="eu-name" value="${u.name||''}"></div>
+        </div>
+        <div class="f-grid-2">
+          <div class="f-group"><label>Username</label><input type="text" id="eu-user" value="${u.username||''}"></div>
+          <div class="f-group"><label>User Level</label>
+            <select id="eu-role" onchange="euRoleChanged()">
+              <option value="tech" ${u.role==='tech'?'selected':''}>Level 1</option>
+              <option value="manager" ${u.role==='manager'?'selected':''}>Level 2</option>
+              <option value="assistant" ${u.role==='assistant'?'selected':''}>Level 3</option>
+              <option value="admin" ${u.role==='admin'?'selected':''}>Level 4</option>
+            </select>
+          </div>
+        </div>
+        <div class="f-group"><label>Team</label>
+          <select id="eu-team"><option value="">None</option>${Store.teams.map(t=>`<option value="${t}" ${u.team===t?'selected':''}>${t}</option>`).join('')}</select>
+        </div>
+        <div class="f-group" id="eu-mgrs-group">
+          <label>Assigned Managers</label>
+          <div class="nu-mgrs-box">
+            ${assignableManagers().filter(m=>m.id!==u.id).map(m=>`<label class="nu-mgr-item"><input type="checkbox" class="eu-mgr-cb" value="${m.id}" ${(u.managerIds||[]).includes(m.id)?'checked':''}> ${m.name}</label>`).join('')}
+          </div>
+        </div>
+        <div class="f-group" style="margin-bottom:0"><label>Reset Password</label>
+          <input type="text" id="eu-pass" placeholder="Leave blank to keep current password">
+        </div>
+      </div>
+      <div class="modal-foot" style="justify-content:space-between">
+        <button class="btn ${u.active?'btn-danger':'btn-success'}" onclick="toggleUser(${u.id}); closeOverlay('edit-user-ov')">${u.active?'Deactivate':'Activate'}</button>
+        <div style="display:flex;gap:0.6rem">
+          <button class="btn btn-ghost" onclick="closeOverlay('edit-user-ov')">Cancel</button>
+          <button class="btn btn-primary" onclick="saveEditUser()">Save Changes</button>
+        </div>
+      </div>
+    </div>`;
+  document.body.appendChild(ov);
+  euRoleChanged();
+  setTimeout(()=>openOverlay('edit-user-ov'), 20);
 }
-function editUserIds(id){
-  const u=Store.users.find(x=>x.id===id); if(!u) return;
-  const newEmp = prompt(`Employee ID for ${u.name}:`, u.empId||'');
-  if (newEmp===null) return;
-  const newUser = prompt(`Username for ${u.name}:`, u.username||'');
-  if (newUser===null) return;
-  const ne = newEmp.trim(), nu = newUser.trim();
-  if (!ne || !nu) { toast('ID and username cannot be empty.','error'); return; }
-  if (Store.users.some(x=>x.id!==id && x.username===nu)) { toast('Username already taken.','error'); return; }
-  u.empId = ne; u.username = nu;
-  toast(`${u.name} — ID/username updated`,'success');
+
+function euRoleChanged() {
+  // Assigned managers apply to Level 1 accounts only
+  const role = $('eu-role')?.value;
+  const grp = $('eu-mgrs-group');
+  if (grp) grp.style.display = role==='tech' ? '' : 'none';
+}
+
+function saveEditUser() {
+  const u = Store.users.find(x=>x.id===editingUserId); if (!u) return;
+  const empId=$('eu-empid').value.trim(), name=$('eu-name').value.trim(), uname=$('eu-user').value.trim();
+  const role=$('eu-role').value, team=$('eu-team').value, pass=$('eu-pass').value.trim();
+  if (!empId||!name||!uname) { toast('ID, name and username are required.','error'); return; }
+  if (Store.users.some(x=>x.id!==u.id && x.username===uname)) { toast('Username already taken.','error'); return; }
+  u.empId=empId; u.name=name; u.username=uname; u.team=team||null;
+  u.role=role; // Level 2 = manager: full manager features; appears under Assigned Managers automatically
+  u.managerIds = role==='tech' ? [...document.querySelectorAll('.eu-mgr-cb:checked')].map(cb=>parseInt(cb.value)) : [];
+  if (pass) u.password = pass;
+  toast(`${u.name} updated ✅${pass?' (password reset 🔑)':''}`,'success');
+  closeOverlay('edit-user-ov');
   $('utbody').innerHTML = usersBody();
 }
-function resetPassword(id){
-  const u=Store.users.find(x=>x.id===id); if(!u) return;
-  const np = prompt(`New password for ${u.name}:`, u.empId||u.username);
-  if (np===null) return;
-  if (!np.trim()) { toast('Password cannot be empty.','error'); return; }
-  u.password = np.trim();
-  toast(`Password reset for ${u.name} 🔑`,'success');
+
+function deleteUser(id) {
+  const u = Store.users.find(x=>x.id===id); if (!u) return;
+  if (u.id === me.id) { toast('You cannot delete your own account.','error'); return; }
+  if (!confirm(`Delete ${u.name} (${u.empId})? This cannot be undone.`)) return;
+  Store.users = Store.users.filter(x=>x.id!==id);
+  // Remove them from any tech's assigned managers
+  Store.users.forEach(x=>{ if (Array.isArray(x.managerIds)) x.managerIds = x.managerIds.filter(m=>m!==id); });
+  toast(`${u.name} deleted.`,'info');
+  $('utbody').innerHTML = usersBody();
 }
+
 function toggleUser(id){ const u=Store.users.find(x=>x.id===id); if(u){ u.active=!u.active; toast(`User ${u.active?'activated':'deactivated'}`,'info'); $('utbody').innerHTML=usersBody(); } }
+
 function saveUser(){
   const name=$('nu-name').value.trim(), uname=$('nu-user').value.trim(), pass=$('nu-pass').value.trim();
   const empId=$('nu-empid').value.trim()||uname;
