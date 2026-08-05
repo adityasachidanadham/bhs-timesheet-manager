@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BHS Kinetic – Timesheet Management</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css?v=7">
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════
+     LOGIN
+══════════════════════════════════════════ -->
+<div id="login-page" style="display:flex">
+
+  <!-- Left branding -->
+  <div class="login-left">
+    <div class="login-branding">
+      <div class="login-logo-wrap">
+        <svg class="bhs-logo bhs-logo-login" viewBox="0 0 210 78" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="BHS Kinetic">
+          <g transform="skewX(-20)">
+            <rect x="42" y="2" width="42" height="16" fill="#F04019"/>
+            <rect x="92" y="2" width="42" height="16" fill="#14246E"/>
+            <rect x="142" y="2" width="42" height="16" fill="#1F9CD8"/>
+          </g>
+          <text x="2" y="72" font-family="Arial, Helvetica, sans-serif" font-size="64" font-weight="900" font-style="italic" letter-spacing="8" fill="#14246E">BHS</text>
+        </svg>
+      </div>
+      <h1 class="login-headline">Timesheet<br><span>Management</span></h1>
+    </div>
+  </div>
+
+  <!-- Right card -->
+  <div class="login-right">
+    <div class="login-card">
+      <div class="login-card-eyebrow">BHS Kinetic Portal</div>
+      <h2>Welcome back</h2>
+      <p class="login-card-sub">Sign in to your account to continue</p>
+      <form id="lform">
+        <div class="lf-group">
+          <label>Username</label>
+          <input type="text" id="lu" placeholder="Enter username" autocomplete="username">
+        </div>
+        <div class="lf-group">
+          <label>Password</label>
+          <input type="password" id="lp" placeholder="Enter password" autocomplete="current-password">
+        </div>
+        <button type="submit" class="login-submit">Sign In →</button>
+        <div id="lerr" class="login-error" style="display:none">Invalid username or password.</div>
+      </form>
+      <div class="demo-section">
+        <div class="demo-label">Demo Accounts</div>
+        <button class="demo-btn" onclick="fillDemo('admin','admin123')">
+          <span>👑 Administrator — Ahmad Ridhwan</span>
+          <span class="demo-btn-right">admin / admin123</span>
+        </button>
+        <button class="demo-btn" onclick="fillDemo('manager1','manager123')">
+          <span>👔 Manager — Sarah Lim</span>
+          <span class="demo-btn-right">manager1 / manager123</span>
+        </button>
+        <button class="demo-btn" onclick="fillDemo('tech1','tech123')">
+          <span>🔧 Tech — Ravi Kumar</span>
+          <span class="demo-btn-right">tech1 / tech123</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     APP
+══════════════════════════════════════════ -->
+<div id="app">
+  <nav class="topnav">
+    <div class="nav-logo">
+      <svg class="bhs-logo bhs-logo-nav" viewBox="0 0 210 78" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="BHS Kinetic">
+        <g transform="skewX(-20)">
+          <rect x="42" y="2" width="42" height="16" fill="#F04019"/>
+          <rect x="92" y="2" width="42" height="16" fill="#14246E"/>
+          <rect x="142" y="2" width="42" height="16" fill="#1F9CD8"/>
+        </g>
+        <text x="2" y="72" font-family="Arial, Helvetica, sans-serif" font-size="64" font-weight="900" font-style="italic" letter-spacing="8" fill="#14246E">BHS</text>
+      </svg>
+    </div>
+    <div class="nav-tabs" id="nav-tabs"></div>
+    <div class="nav-right">
+      <div class="nav-user-chip">
+        <div class="nav-avatar" id="nav-init">–</div>
+        <div class="nav-user-info">
+          <div class="nav-username" id="nav-name">–</div>
+          <div class="nav-role-tag" id="nav-role">–</div>
+        </div>
+      </div>
+      <button class="signout-btn" onclick="logout()">Sign Out</button>
+    </div>
+  </nav>
+  <div class="page-wrap" id="content"></div>
+</div>
+
+<!-- Toast stack -->
+<div class="toast-stack"></div>
+
+<script src="app.js?v=5"></script>
+
+</body>
+</html>
