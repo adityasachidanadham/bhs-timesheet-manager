@@ -10,7 +10,7 @@ const Store = {
     { id:5, empId:'0000', name:'HR', username:'0000', password:'0000', role:'admin', team:null, managerIds:[], active:true },
     { id:6, empId:'1111', name:'Mike', username:'1111', password:'1111', role:'admin', team:null, managerIds:[], active:true },
     { id:7, empId:'3333', name:'Admin 3333', username:'3333', password:'3333', role:'admin', team:null, managerIds:[], active:true },
-    { id:2, empId:'1188', name:'Sachidanandham Aditya', username:'1188', password:'1188', role:'admin', team:null, managerIds:[], active:true },
+    { id:2, empId:'1188', name:'Aditya', username:'1188', password:'1188', role:'admin', team:null, managerIds:[], assignable:true, active:true },
     { id:3, empId:'0061', name:'Kevin Lee Kok Meng', username:'0061', password:'0061', role:'manager', team:null, managerIds:[], active:true },
     { id:4, empId:'0044', name:'Lim Khan Yee', username:'0044', password:'0044', role:'manager', team:null, managerIds:[], active:true },
     { id:10, empId:'0021', name:'Khoo Gim Soon Adrian', username:'0021', password:'0021', role:'tech', team:'AMHS', managerIds:[3,4], active:true },
@@ -158,8 +158,7 @@ function recalcTs(ts) {
   const byDate = {};
   ts.entries.forEach(e => {
     if (!e.date) return;
-    const wh = isLeave(e.sbType) ? e.workHrs : e.workHrs; // always use workHrs for OT
-    byDate[e.date] = (byDate[e.date]||0) + (e.workHrs||0);
+    byDate[e.date] = (byDate[e.date]||0) + (e.workHrs||0);   // OT is based on Deployed hours only
   });
   // Assign OT back to entries proportionally
   const datePool = {};
@@ -219,9 +218,15 @@ function bootApp() {
   goTo(me.role==='tech' ? 'timesheet' : 'approvals');
 }
 
-// Users that can have employees assigned to them (Level 2 managers + Aditya)
+// Users that can have employees assigned to them (Level 2 managers + anyone flagged by Level 4)
 function assignableManagers() {
-  return Store.users.filter(u => u.active && (u.role==='manager' || u.empId==='1188'));
+  return Store.users.filter(u => u.active && (u.role==='manager' || u.assignable===true));
+}
+function toggleAssignable(id) {
+  const u = Store.users.find(x=>x.id===id); if (!u) return;
+  u.assignable = !u.assignable;
+  toast(`${u.name} ${u.assignable?'added to':'removed from'} Assigned Managers list`,'success');
+  $('utbody').innerHTML = usersBody();
 }
 
 function roleLabel(role) {
@@ -424,11 +429,6 @@ function loadTs() {
   renderTsRows(ts, editable);
   renderTsFooter(ts);
 
-  // Add row button (not for tech — their month is auto-generated day by day)
-  const wrap = $('ts-add-row-wrap');
-  wrap.innerHTML = (editable && !usesDayGrid())
-    ? `<button class="add-row-trigger" onclick="addRow(${ts?.id||'null'})">＋ Add Row</button>`
-    : '';
 }
 
 function renderTsActions(ts, editable) {
@@ -443,44 +443,10 @@ function renderTsActions(ts, editable) {
 }
 
 function renderTsSummary(ts) {
+  // Summary strip intentionally hidden — all roles use the compact day-grid layout
   const el = $('ts-summary');
-  if (!el) return;
-  if (usesDayGrid()) { el.innerHTML=''; return; }
-  if (!ts || !ts.entries.length) { el.innerHTML=''; return; }
-  const totalWork = ts.entries.reduce((s,e)=>s+(e.workHrs||0),0);
-  const totalSb   = ts.entries.reduce((s,e)=>s+(e.sbHrs||0),0);
-  const ot15      = ts.entries.reduce((s,e)=>s+(e.ot15||0),0);
-  const ot20      = ts.entries.reduce((s,e)=>s+(e.ot20||0),0);
-  const totalOT   = ot15+ot20;
-  
-  // Count allowance entries
-  const countAllowance = (name) => ts.entries.filter(e => Array.isArray(e.allowances) && e.allowances.includes(name)).length;
-  const mealCount = countAllowance('Meal Allowance');
-  const transportCount = countAllowance('Transport Allowance');
-  const shiftCount = countAllowance('Shift Allowance');
-  const projectCount = countAllowance('Project Allowance');
-  
-  el.innerHTML = `
-    <div class="sum-item"><span class="sum-label">Working</span><span class="sum-value">${fmt(totalWork)}h</span></div>
-    <div class="sum-div"></div>
-    <div class="sum-item"><span class="sum-label">Standby/Leave</span><span class="sum-value">${fmt(totalSb)}h</span></div>
-    <div class="sum-div"></div>
-    <div class="sum-item"><span class="sum-label">OT 1.5×</span><span class="sum-value">${fmt(ot15)}h</span></div>
-    <div class="sum-div"></div>
-    <div class="sum-item"><span class="sum-label">OT 2.0×</span><span class="sum-value">${fmt(ot20)}h</span></div>
-    <div class="sum-div"></div>
-    <div class="sum-item"><span class="sum-label">Total OT</span><span class="sum-value ${totalOT>72?'danger':totalOT>60?'warn':''}">${fmt(totalOT)}h${totalOT>72?' ⚠️':''}</span></div>
-    <div class="sum-div"></div>
-    <div class="sum-item"><span class="sum-label">Meal</span><span class="sum-value">${mealCount}</span></div>
-    <div class="sum-div"></div>
-    <div class="sum-item"><span class="sum-label">Transport</span><span class="sum-value">${transportCount}</span></div>
-    <div class="sum-div"></div>
-    <div class="sum-item"><span class="sum-label">Shift</span><span class="sum-value">${shiftCount}</span></div>
-    <div class="sum-div"></div>
-    <div class="sum-item"><span class="sum-label">Project</span><span class="sum-value">${projectCount}</span></div>
-  `;
+  if (el) el.innerHTML = '';
 }
-
 function renderTsAlerts(ts) {
   const el = $('ts-alerts');
   el.innerHTML = '';
@@ -521,13 +487,13 @@ function collectWarnings(ts) {
   const dayHrs = {};
   ts.entries.forEach(e=>{ if(e.date) dayHrs[e.date]=(dayHrs[e.date]||0)+(e.workHrs||0)+(e.sbHrs||0); });
   Object.entries(dayHrs).forEach(([d,h])=>{ if(h<8&&h>0) warnings.push(`${fmtD(d)}: only ${fmt(h)}h (min 8h/day).`); });
-  // Weekly minimum
+  // Weekly minimum (weeks within the 16th→15th period)
   const weekHrs = {};
   ts.entries.forEach(e=>{
     if(!e.date) return;
-    const dt=new Date(e.date+'T00:00:00');
-    const wk=`W${Math.ceil((dt.getDate()+new Date(dt.getFullYear(),dt.getMonth(),1).getDay())/7)}`;
-    weekHrs[wk]=(weekHrs[wk]||0)+(e.workHrs||0)+(e.sbHrs||0);
+    const w = periodWeek(e.date, ts.year, ts.month);
+    if (w===null) return;
+    weekHrs[`Week ${w}`]=(weekHrs[`Week ${w}`]||0)+(e.workHrs||0)+(e.sbHrs||0);
   });
   Object.entries(weekHrs).forEach(([w,h])=>{ if(h<44&&h>0) warnings.push(`${w}: ${fmt(h)}h (min 44h/week).`); });
   return warnings;
@@ -561,7 +527,7 @@ function renderTsRows(ts, editable) {
   const body = $('ts-body');
   body.innerHTML = '';
   if (!ts || !ts.entries.length) {
-    body.innerHTML = `<tr><td colspan="${usesDayGrid()?18:11}"><div class="empty"><div class="empty-ico">📋</div><p>No entries yet${me.role==='tech'?'':' — click "Add Row" to begin'}</p></div></td></tr>`;
+    body.innerHTML = `<tr><td colspan="18"><div class="empty"><div class="empty-ico">📋</div><p>No entries yet</p></div></td></tr>`;
     return;
   }
   ts.entries.forEach(e => buildRow(e, ts, editable));
@@ -675,210 +641,6 @@ function buildRow(e, ts, editable) {
     return;
   }
 
-  if (!editable) {
-    tr.innerHTML = `
-      <td><strong>${fmtD(e.date)}</strong><br><small class="td-muted" style="font-size:0.75rem">${dayInfo}</small></td>
-      <td>${e.customer||'–'}</td>
-      <td class="td-mono"><strong>${e.workHrs||0}h</strong></td>
-      <td class="td-muted">${e.sbHrs||0}h <span style="font-size:0.75rem">(${e.sbType||'Standby'})</span></td>
-      <td>${e.description||'–'}</td>
-      <td>${e.country||'–'}</td>
-      <td>${e.equipment||'–'}</td>
-      <td class="allow-cell">${allowanceBadges(e.allowances)}</td>
-      <td>${e.ot15>0?`<span class="ot-tag ot-tag-15">${fmt(e.ot15)}h</span>`:'<span class="ot-tag-none">–</span>'}</td>
-      <td>${e.ot20>0?`<span class="ot-tag ot-tag-20">${fmt(e.ot20)}h</span>`:'<span class="ot-tag-none">–</span>'}</td>
-      <td></td>`;
-  } else {
-    tr.innerHTML = `
-      <td>
-        <input class="ts-input" type="date" value="${e.date}" onchange="upd(${ts.id},${e.id},'date',this.value)">
-        <small class="td-muted" id="dl-${e.id}" style="font-size:0.73rem;display:block;margin-top:0.2rem">${dayInfo}</small>
-      </td>
-      <td>
-        <select class="ts-input" onchange="upd(${ts.id},${e.id},'customer',this.value)">
-          <option value="">Select…</option>
-          ${Store.customers.map(c=>`<option value="${c}" ${e.customer===c?'selected':''}>${c}</option>`).join('')}
-        </select>
-      </td>
-      <td>
-        <input class="ts-input ts-input-num" type="number" min="0" max="24" step="0.5" value="${e.workHrs||0}"
-          onchange="upd(${ts.id},${e.id},'workHrs',parseFloat(this.value)||0)">
-      </td>
-      <td>
-        <div class="ts-standby-cell">
-          <input class="ts-input ts-input-num ts-standby-hrs" type="number" min="0" max="24" step="0.5" value="${e.sbHrs||0}"
-            onchange="upd(${ts.id},${e.id},'sbHrs',parseFloat(this.value)||0)">
-          <select class="ts-input ts-standby-type" onchange="upd(${ts.id},${e.id},'sbType',this.value)">
-            ${Store.standbyTypes.map(t=>`<option value="${t}" ${e.sbType===t?'selected':''}>${t}</option>`).join('')}
-          </select>
-        </div>
-      </td>
-      <td>
-        <input class="ts-input" type="text" value="${e.description||''}" placeholder="Job description…"
-          onchange="upd(${ts.id},${e.id},'description',this.value)">
-      </td>
-      <td>
-        <select class="ts-input" onchange="upd(${ts.id},${e.id},'country',this.value)">
-          <option value="">Select…</option>
-          ${Store.countries.map(c=>`<option value="${c}" ${e.country===c?'selected':''}>${c}</option>`).join('')}
-        </select>
-      </td>
-      <td>
-        <select class="ts-input" onchange="upd(${ts.id},${e.id},'equipment',this.value)">
-          <option value="">Select…</option>
-          ${Store.equipment.map(t=>`<option value="${t}" ${e.equipment===t?'selected':''}>${t}</option>`).join('')}
-        </select>
-      </td>
-      <td class="allow-cell">
-        <div class="allowance-dd" id="alw-${e.id}">
-          <button type="button" class="allowance-dd-toggle" id="alw-toggle-${e.id}"
-            onclick="toggleAllowanceDD(event, ${ts.id}, ${e.id})">
-            <span class="allowance-dd-label">${allowanceLabel(e.allowances)}</span>
-            <span class="allowance-dd-caret">▾</span>
-          </button>
-        </div>
-      </td>
-      <td><div class="ts-ro ot-tag-15" id="ot15-${e.id}">${e.ot15>0?fmt(e.ot15)+'h':'–'}</div></td>
-      <td><div class="ts-ro ot-tag-20" id="ot20-${e.id}">${e.ot20>0?fmt(e.ot20)+'h':'–'}</div></td>
-      <td><button class="del-row-btn" onclick="delRow(${ts.id},${e.id})" title="Delete">✕</button></td>`;
-  }
-  body.appendChild(tr);
-}
-
-// ── Allowances (multi-select) ────────────────────────────────
-// Read-only badges shown in the table cell.
-function allowanceBadges(list) {
-  const arr = Array.isArray(list) ? list : [];
-  if (!arr.length) return '<span class="allowance-badge allow-no">–</span>';
-  return arr.map(a => `<span class="allowance-badge allow-yes">${a}</span>`).join(' ');
-}
-
-// Compact label shown on the dropdown toggle button.
-function allowanceLabel(list) {
-  const arr = Array.isArray(list) ? list : [];
-  if (!arr.length) return 'None';
-  if (arr.length === 1) return arr[0];
-  return `${arr.length} selected`;
-}
-
-// Open/close the floating multi-select panel for an entry.
-function toggleAllowanceDD(ev, tsId, entryId) {
-  ev.stopPropagation();
-  const existing = document.getElementById('allowance-panel');
-  const wasForThis = existing && existing.dataset.entry === String(entryId);
-  closeAllowanceDD();
-  if (wasForThis) return;
-
-  const ts = Store.timesheets.find(t => t.id === tsId);
-  const e  = ts?.entries.find(x => x.id === entryId);
-  if (!e) return;
-  if (!Array.isArray(e.allowances)) e.allowances = [];
-
-  const toggleBtn = document.getElementById(`alw-toggle-${entryId}`);
-  const rect = toggleBtn.getBoundingClientRect();
-
-  const panel = document.createElement('div');
-  panel.id = 'allowance-panel';
-  panel.className = 'allowance-dd-panel';
-  panel.dataset.entry = String(entryId);
-  panel.dataset.ts = String(tsId);
-
-  const noneActive = e.allowances.length === 0;
-  let html = `<div class="allowance-dd-option allowance-dd-none ${noneActive ? 'is-active' : ''}"
-       onclick="clearAllowances(${tsId}, ${entryId})">
-       <span class="allowance-dd-check">${noneActive ? '✓' : ''}</span>
-       <span>None</span>
-     </div>`;
-  html += Store.allowanceTypes.map(name => {
-    const on = e.allowances.includes(name);
-    return `<label class="allowance-dd-option">
-        <input type="checkbox" ${on ? 'checked' : ''}
-          onchange="setAllowance(${tsId}, ${entryId}, '${name}', this.checked)">
-        <span class="allowance-dd-check">${on ? '✓' : ''}</span>
-        <span>${name}</span>
-      </label>`;
-  }).join('');
-  panel.innerHTML = html;
-
-  document.body.appendChild(panel);
-  // Position (fixed) just under the toggle so the table's overflow can't clip it.
-  const pw = panel.offsetWidth;
-  let left = rect.left;
-  if (left + pw > window.innerWidth - 8) left = window.innerWidth - pw - 8;
-  panel.style.top  = `${rect.bottom + 4}px`;
-  panel.style.left = `${Math.max(8, left)}px`;
-
-  setTimeout(() => {
-    document.addEventListener('click', outsideAllowanceClick);
-    window.addEventListener('scroll', closeAllowanceDD, true);
-    window.addEventListener('resize', closeAllowanceDD);
-  }, 0);
-}
-
-function outsideAllowanceClick(ev) {
-  const panel = document.getElementById('allowance-panel');
-  if (panel && !panel.contains(ev.target)) closeAllowanceDD();
-}
-
-function closeAllowanceDD() {
-  const panel = document.getElementById('allowance-panel');
-  if (panel) panel.remove();
-  document.removeEventListener('click', outsideAllowanceClick);
-  window.removeEventListener('scroll', closeAllowanceDD, true);
-  window.removeEventListener('resize', closeAllowanceDD);
-}
-
-function setAllowance(tsId, entryId, name, checked) {
-  const ts = Store.timesheets.find(t => t.id === tsId);
-  const e  = ts?.entries.find(x => x.id === entryId);
-  if (!e) return;
-  if (!Array.isArray(e.allowances)) e.allowances = [];
-  if (checked) {
-    if (!e.allowances.includes(name)) e.allowances.push(name);
-  } else {
-    e.allowances = e.allowances.filter(a => a !== name);
-  }
-  // Keep stored order consistent with the defined list.
-  e.allowances = Store.allowanceTypes.filter(a => e.allowances.includes(a));
-  refreshAllowanceUI(tsId, entryId);
-}
-
-function clearAllowances(tsId, entryId) {
-  const ts = Store.timesheets.find(t => t.id === tsId);
-  const e  = ts?.entries.find(x => x.id === entryId);
-  if (!e) return;
-  e.allowances = [];
-  refreshAllowanceUI(tsId, entryId);
-}
-
-// Update the toggle label, the panel ticks, and the summary counts in place.
-function refreshAllowanceUI(tsId, entryId) {
-  const ts = Store.timesheets.find(t => t.id === tsId);
-  const e  = ts?.entries.find(x => x.id === entryId);
-  if (!e) return;
-  const lbl = document.querySelector(`#alw-toggle-${entryId} .allowance-dd-label`);
-  if (lbl) lbl.textContent = allowanceLabel(e.allowances);
-
-  const panel = document.getElementById('allowance-panel');
-  if (panel && panel.dataset.entry === String(entryId)) {
-    const noneActive = e.allowances.length === 0;
-    const noneEl = panel.querySelector('.allowance-dd-none');
-    if (noneEl) {
-      noneEl.classList.toggle('is-active', noneActive);
-      const c = noneEl.querySelector('.allowance-dd-check');
-      if (c) c.textContent = noneActive ? '✓' : '';
-    }
-    panel.querySelectorAll('label.allowance-dd-option').forEach((lab, i) => {
-      const name = Store.allowanceTypes[i];
-      if (name === undefined) return;
-      const on = e.allowances.includes(name);
-      const cb = lab.querySelector('input[type=checkbox]');
-      const tick = lab.querySelector('.allowance-dd-check');
-      if (cb) cb.checked = on;
-      if (tick) tick.textContent = on ? '✓' : '';
-    });
-  }
-  renderTsSummary(ts);
 }
 
 // Deployed + Standby split rule: standby only allowed within the 8-hour day.
@@ -917,26 +679,6 @@ function upd(tsId, entryId, field, val) {
   }
   renderTsSummary(ts);
   renderTsAlerts(ts);
-}
-
-function addRow(tsId) {
-  let ts = Store.timesheets.find(t=>t.id===tsId);
-  if (!ts) {
-    ts = { id:Store.nextId.ts++, userId:me.id, year:tsYear, month:tsMonth, status:'draft', submittedAt:null, approvedAt:null, approvedBy:null, rejectionComment:'', entries:[] };
-    Store.timesheets.push(ts);
-  }
-  const defDate = `${tsYear}-${String(tsMonth).padStart(2,'0')}-01`;
-  ts.entries.push({ id:Store.nextId.entry++, date:defDate, customer:'', workHrs:8, sbHrs:0, sbType:'Standby', description:'', country:'', equipment:'', allowances:[], ot15:0, ot20:0 });
-  recalcTs(ts);
-  loadTs();
-}
-
-function delRow(tsId, entryId) {
-  const ts = Store.timesheets.find(t=>t.id===tsId);
-  if (!ts) return;
-  ts.entries = ts.entries.filter(e=>e.id!==entryId);
-  recalcTs(ts);
-  loadTs();
 }
 
 function renderTsFooter(ts) {
@@ -1124,7 +866,7 @@ function openPrintTab(tsId) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <base href="${document.baseURI}">
     <title>Timesheet — ${u?.name} · ${MONTHS[ts.month-1]} ${ts.year}</title>
-    <link rel="stylesheet" href="styles.css?v=15">
+    <link rel="stylesheet" href="styles.css?v=17">
     </head><body style="background:#fff">
     <div class="page-wrap">
       <div class="sec-header">
@@ -1198,7 +940,7 @@ function openReviewTab(tsId) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <base href="${document.baseURI}">
     <title>Review — ${u?.name} · ${MONTHS[ts.month-1]} ${ts.year}</title>
-    <link rel="stylesheet" href="styles.css?v=13">
+    <link rel="stylesheet" href="styles.css?v=17">
     </head><body style="background:var(--bg)">
     <div class="page-wrap">
       <div class="sec-header">
@@ -1453,7 +1195,10 @@ function renderAdmin(el) {
       <div class="modal">
         <div class="modal-head"><h3>Add New User</h3><button class="modal-x" onclick="closeOverlay('add-user-ov')">✕</button></div>
         <div class="modal-body">
-          <div class="f-group"><label>Full Name</label><input type="text" id="nu-name" placeholder="Full name"></div>
+          <div class="f-grid-2">
+            <div class="f-group"><label>Full Name</label><input type="text" id="nu-name" placeholder="Full name"></div>
+            <div class="f-group"><label>Employee ID</label><input type="text" id="nu-empid" placeholder="e.g. 0123"></div>
+          </div>
           <div class="f-grid-2">
             <div class="f-group"><label>Username</label><input type="text" id="nu-user" placeholder="username"></div>
             <div class="f-group"><label>Password</label><input type="password" id="nu-pass" placeholder="password"></div>
@@ -1471,9 +1216,10 @@ function renderAdmin(el) {
               <select id="nu-team"><option value="">None</option>${Store.teams.map(t=>`<option value="${t}">${t}</option>`).join('')}</select>
             </div>
           </div>
-          <div class="f-group"><label>Assigned Managers (for Level 1)</label>
-            <div id="nu-mgrs" style="display:flex;flex-wrap:wrap;gap:0.4rem 1rem;padding:0.5rem 0.2rem">
-              ${assignableManagers().map(m=>`<label style="display:inline-flex;align-items:center;gap:0.35rem;font-size:0.85rem;cursor:pointer"><input type="checkbox" class="nu-mgr-cb" value="${m.id}"> ${m.name}</label>`).join('')}
+          <div class="f-group" style="margin-bottom:0">
+            <label>Assigned Managers (for Level 1)</label>
+            <div class="nu-mgrs-box">
+              ${assignableManagers().map(m=>`<label class="nu-mgr-item"><input type="checkbox" class="nu-mgr-cb" value="${m.id}"> ${m.name}</label>`).join('')}
             </div>
           </div>
         </div>
@@ -1523,9 +1269,9 @@ function adminTab(tab, btn) {
           <ul class="master-items" id="ml-countries">${masterList('countries')}</ul>
           <div class="add-item-bar"><input type="text" id="mi-countries" placeholder="Add country…"><button class="btn btn-primary btn-sm" onclick="addMI('countries','mi-countries','ml-countries')">Add</button></div>
         </div></div>
-        <div class="card"><div class="card-head"><h3>Work Locations</h3></div><div class="card-body">
+        <div class="card"><div class="card-head"><h3>Customers</h3></div><div class="card-body">
           <ul class="master-items" id="ml-customers">${masterList('customers')}</ul>
-          <div class="add-item-bar"><input type="text" id="mi-customers" placeholder="Add work location…"><button class="btn btn-primary btn-sm" onclick="addMI('customers','mi-customers','ml-customers')">Add</button></div>
+          <div class="add-item-bar"><input type="text" id="mi-customers" placeholder="Add customer…"><button class="btn btn-primary btn-sm" onclick="addMI('customers','mi-customers','ml-customers')">Add</button></div>
         </div></div>
         <div class="card"><div class="card-head"><h3>Equipment Names</h3></div><div class="card-body">
           <ul class="master-items" id="ml-equipment">${masterList('equipment')}</ul>
@@ -1570,8 +1316,10 @@ function usersBody() {
             <input type="checkbox" ${(u.managerIds||[]).includes(m.id)?'checked':''} onchange="toggleUserMgr(${u.id},${m.id},this.checked)"> ${m.name.split(' ')[0]}</label>`).join('')
         : '<span class="td-muted" style="font-size:0.78rem">–</span>'}</td>
       <td><span class="pill ${u.active?'pill-approved':'pill-rejected'}">${u.active?'Active':'Inactive'}</span></td>
-      <td style="white-space:nowrap">
+      <td class="admin-actions">
+        <button class="btn btn-sm btn-ghost" onclick="editUserIds(${u.id})">Edit IDs</button>
         <button class="btn btn-sm btn-ghost" onclick="resetPassword(${u.id})">Reset PW</button>
+        ${u.role!=='manager' ? `<button class="btn btn-sm btn-ghost" onclick="toggleAssignable(${u.id})">${u.assignable?'Unlist Mgr':'List as Mgr'}</button>` : ''}
         <button class="btn btn-sm ${u.active?'btn-danger':'btn-success'}" onclick="toggleUser(${u.id})">${u.active?'Deactivate':'Activate'}</button>
       </td>
     </tr>`;
@@ -1587,6 +1335,19 @@ function toggleUserMgr(id, mgrId, on){
   const mgr=userBy(mgrId);
   toast(`${u.name} ${on?'assigned to':'removed from'} ${mgr?.name}`,'success');
 }
+function editUserIds(id){
+  const u=Store.users.find(x=>x.id===id); if(!u) return;
+  const newEmp = prompt(`Employee ID for ${u.name}:`, u.empId||'');
+  if (newEmp===null) return;
+  const newUser = prompt(`Username for ${u.name}:`, u.username||'');
+  if (newUser===null) return;
+  const ne = newEmp.trim(), nu = newUser.trim();
+  if (!ne || !nu) { toast('ID and username cannot be empty.','error'); return; }
+  if (Store.users.some(x=>x.id!==id && x.username===nu)) { toast('Username already taken.','error'); return; }
+  u.empId = ne; u.username = nu;
+  toast(`${u.name} — ID/username updated`,'success');
+  $('utbody').innerHTML = usersBody();
+}
 function resetPassword(id){
   const u=Store.users.find(x=>x.id===id); if(!u) return;
   const np = prompt(`New password for ${u.name}:`, u.empId||u.username);
@@ -1598,11 +1359,12 @@ function resetPassword(id){
 function toggleUser(id){ const u=Store.users.find(x=>x.id===id); if(u){ u.active=!u.active; toast(`User ${u.active?'activated':'deactivated'}`,'info'); $('utbody').innerHTML=usersBody(); } }
 function saveUser(){
   const name=$('nu-name').value.trim(), uname=$('nu-user').value.trim(), pass=$('nu-pass').value.trim();
+  const empId=$('nu-empid').value.trim()||uname;
   const role=$('nu-role').value, team=$('nu-team').value;
   const mgrIds=[...document.querySelectorAll('.nu-mgr-cb:checked')].map(cb=>parseInt(cb.value));
   if(!name||!uname||!pass){ toast('Fill all fields.','error'); return; }
   if(Store.users.some(u=>u.username===uname)){ toast('Username taken.','error'); return; }
-  Store.users.push({id:Store.nextId.user++,empId:uname,name,username:uname,password:pass,role,team:team||null,managerIds:role==='tech'?mgrIds:[],active:true});
+  Store.users.push({id:Store.nextId.user++,empId,name,username:uname,password:pass,role,team:team||null,managerIds:role==='tech'?mgrIds:[],active:true});
   toast(`${name} added ✅`,'success');
   closeOverlay('add-user-ov');
   adminTab('users',document.querySelector('.sub-tab.active'));

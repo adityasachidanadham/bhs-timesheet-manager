@@ -519,6 +519,7 @@ img { max-width: 100%; }
 .nav-role-tag.admin { color: var(--bhs-blue-mid); }
 .nav-role-tag.manager { color: var(--green-text); }
 .nav-role-tag.tech { color: var(--orange-text); }
+.nav-role-tag.assistant { color: #7c3aed; }
 
 .signout-btn {
   padding: 0.4rem 0.9rem;
@@ -1346,3 +1347,28 @@ td.tsx-act-cell { width: 100%; }
 .apl-table td { overflow: hidden; text-overflow: ellipsis; }
 .apl-actions { text-align: right; white-space: nowrap; padding-right: 1rem !important; }
 .apl-actions .btn { margin-left: 0.35rem; padding: 0.32rem 0.7rem; font-size: 0.75rem; }
+
+/* ── Admin: Add User managers box + action buttons ──────────── */
+.nu-mgrs-box {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.45rem 1rem;
+  padding: 0.7rem 0.9rem;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  max-height: 140px;
+  overflow-y: auto;
+}
+.nu-mgr-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.85rem;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.admin-actions { white-space: nowrap; text-align: right; }
+.admin-actions .btn { margin-left: 0.3rem; padding: 0.3rem 0.6rem; font-size: 0.72rem; }
