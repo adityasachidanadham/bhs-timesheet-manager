@@ -222,7 +222,7 @@ img { max-width: 100%; }
   margin-bottom: 0.5rem;
   animation: fadeUp 0.8s var(--ease-out) both;
 }
-.bhs-logo-login { height: 132px; width: auto; display: block; }
+.bhs-logo-login { height: 104px; width: auto; display: block; }
 
 .login-headline {
   font-family: sans-serif;
