@@ -6,76 +6,76 @@
 // ── Data Store ──────────────────────────────────────────────
 const Store = {
   users: [
-    { id:1, empId:'0871', name:'MARLINA BINTE AHMAD', username:'marlina', password:'admin123', role:'admin', team:null, managerId:null, active:true },
-    { id:2, empId:'1188', name:'SACHIDANANHDAM ADITYA', username:'aditya', password:'manager123', role:'manager', team:null, managerId:null, active:true },
-    { id:3, empId:'0061', name:'KEVIN LEE KOK MENG', username:'kevin', password:'manager123', role:'manager', team:null, managerId:null, active:true },
-    { id:4, empId:'0044', name:'LIM KHAN YEE', username:'khanyee', password:'manager123', role:'manager', team:null, managerId:null, active:true },
-    { id:10, empId:'0021', name:'KHOO GIM SOON ADRIAN', username:'0021', password:'tech123', role:'tech', team:'AMHS', managerId:null, active:true },
-    { id:11, empId:'0056', name:'CHO YONG KIONG', username:'0056', password:'tech123', role:'tech', team:'AMHS', managerId:null, active:true },
-    { id:12, empId:'0496', name:'LANGH BIAK LIAN', username:'0496', password:'tech123', role:'tech', team:'AMHS', managerId:null, active:true },
-    { id:13, empId:'0518', name:'KOH KENG BOON', username:'0518', password:'tech123', role:'tech', team:'AMHS', managerId:null, active:true },
-    { id:14, empId:'0553', name:'CHONG HAN KIANG', username:'0553', password:'tech123', role:'tech', team:'AMHS', managerId:null, active:true },
-    { id:15, empId:'0651', name:'RAVIKUMAR RAJESH KUMAR', username:'0651', password:'tech123', role:'tech', team:'AMHS', managerId:null, active:true },
-    { id:16, empId:'0002', name:'IMRAN GAZI', username:'0002', password:'tech123', role:'tech', team:'AMHS', managerId:null, active:true },
-    { id:17, empId:'0003', name:'ALAM SHAHIN', username:'0003', password:'tech123', role:'tech', team:'AMHS', managerId:null, active:true },
-    { id:18, empId:'0885', name:'YAN QINGQING', username:'0885', password:'tech123', role:'tech', team:'AMHS', managerId:null, active:true },
-    { id:19, empId:'0474', name:'CHAN MAW', username:'0474', password:'tech123', role:'tech', team:'ATTACHMENT', managerId:null, active:true },
-    { id:20, empId:'783', name:'KYI SOE HAN', username:'783', password:'tech123', role:'tech', team:'ATTACHMENT', managerId:null, active:true },
-    { id:21, empId:'1216', name:'Aung Ko Ko', username:'1216', password:'tech123', role:'tech', team:'ATTACHMENT', managerId:null, active:true },
-    { id:22, empId:'0640', name:'NGUYEN HOANG MINH CUONG', username:'0640', password:'tech123', role:'tech', team:'ATTACHMENT', managerId:null, active:true },
-    { id:23, empId:'0641', name:'NGUYEN HUU TAM', username:'0641', password:'tech123', role:'tech', team:'ATTACHMENT', managerId:null, active:true },
-    { id:24, empId:'0022', name:'TAM WEE CHOR', username:'0022', password:'tech123', role:'tech', team:'ASML', managerId:null, active:true },
-    { id:25, empId:'0028', name:'ZHANG HANFENG', username:'0028', password:'tech123', role:'tech', team:'ASML', managerId:null, active:true },
-    { id:26, empId:'0035', name:'QUEK WEI LIAN', username:'0035', password:'tech123', role:'tech', team:'ASML', managerId:null, active:true },
-    { id:27, empId:'0037', name:'ASYRAF MUHAMMAD BIN SAIDI', username:'0037', password:'tech123', role:'tech', team:'ASML', managerId:null, active:true },
-    { id:28, empId:'0045', name:'LAI YIN TECK', username:'0045', password:'tech123', role:'tech', team:'ASML', managerId:null, active:true },
-    { id:29, empId:'0054', name:'PANG GEE YNG', username:'0054', password:'tech123', role:'tech', team:'ASML', managerId:null, active:true },
-    { id:30, empId:'0055', name:'SOO TONG EE', username:'0055', password:'tech123', role:'tech', team:'ASML', managerId:null, active:true },
-    { id:31, empId:'0092', name:'YONG KOK FONG', username:'0092', password:'tech123', role:'tech', team:'ASML', managerId:null, active:true },
-    { id:32, empId:'0137', name:'TASMIN CHANDRAN', username:'0137', password:'tech123', role:'tech', team:'ASML', managerId:null, active:true },
-    { id:33, empId:'0139', name:'SEAH WEN HONG', username:'0139', password:'tech123', role:'tech', team:'ASML', managerId:null, active:true },
-    { id:34, empId:'0144', name:'HO SIEW CHANG', username:'0144', password:'tech123', role:'tech', team:'ASML', managerId:null, active:true },
-    { id:35, empId:'0162', name:'KOH GOON SENG', username:'0162', password:'tech123', role:'tech', team:'ASML', managerId:null, active:true },
-    { id:36, empId:'0279', name:'LEE SHANG CHENG', username:'0279', password:'tech123', role:'tech', team:'ASML', managerId:null, active:true },
-    { id:37, empId:'0280', name:'JOHN MICHAEL PAMINTUAN TORRES', username:'0280', password:'tech123', role:'tech', team:'ASML', managerId:null, active:true },
-    { id:38, empId:'0375', name:'HO WEI SIONG', username:'0375', password:'tech123', role:'tech', team:'ASML', managerId:null, active:true },
-    { id:39, empId:'0452', name:'GOH WEI XIANG, MATTHIAS', username:'0452', password:'tech123', role:'tech', team:'ASML', managerId:null, active:true },
-    { id:40, empId:'0470', name:'PAVITHRAN PALANIANDY', username:'0470', password:'tech123', role:'tech', team:'ASML', managerId:null, active:true },
-    { id:41, empId:'0479', name:'LUISITO CASTRO DELA CRUZ', username:'0479', password:'tech123', role:'tech', team:'ASML', managerId:null, active:true },
-    { id:42, empId:'0093', name:'JI PENG LI', username:'0093', password:'tech123', role:'tech', team:'ASML', managerId:null, active:true },
-    { id:43, empId:'0560', name:'TAN WOON TER', username:'0560', password:'tech123', role:'tech', team:'ASML', managerId:null, active:true },
-    { id:44, empId:'0669', name:'FONG CHEN KIONG', username:'0669', password:'tech123', role:'tech', team:'ASML', managerId:null, active:true },
-    { id:45, empId:'0694', name:'RAM KUMAR ASYTHAMBY', username:'0694', password:'tech123', role:'tech', team:'ASML', managerId:null, active:true },
-    { id:46, empId:'0712', name:'LO KIM POH', username:'0712', password:'tech123', role:'tech', team:'ASML', managerId:null, active:true },
-    { id:47, empId:'0713', name:'LIANG JIACHUN', username:'0713', password:'tech123', role:'tech', team:'ASML', managerId:null, active:true },
-    { id:48, empId:'0726', name:'FAN WEI', username:'0726', password:'tech123', role:'tech', team:'ASML', managerId:null, active:true },
-    { id:49, empId:'0736', name:'SIH TIAN SHI', username:'0736', password:'tech123', role:'tech', team:'ASML', managerId:null, active:true },
-    { id:50, empId:'0747', name:'MOHAMMED SHAFIQ bin MD SULTAN', username:'0747', password:'tech123', role:'tech', team:'ASML', managerId:null, active:true },
-    { id:51, empId:'0742', name:'Benny Tan Beng Teck', username:'0742', password:'tech123', role:'tech', team:'ASML', managerId:null, active:true },
-    { id:52, empId:'0757', name:'Chan Ding Xuan', username:'0757', password:'tech123', role:'tech', team:'ASML', managerId:null, active:true },
-    { id:53, empId:'0779', name:'Faris Sharyl bin Ismail', username:'0779', password:'tech123', role:'tech', team:'ASML', managerId:null, active:true },
-    { id:54, empId:'0778', name:'Eugene Ng', username:'0778', password:'tech123', role:'tech', team:'ASML', managerId:null, active:true },
-    { id:55, empId:'0780', name:'Kho Yiap Wei', username:'0780', password:'tech123', role:'tech', team:'ASML', managerId:null, active:true },
-    { id:56, empId:'0781', name:'CHIN WAI KEAT', username:'0781', password:'tech123', role:'tech', team:'ASML', managerId:null, active:true },
-    { id:57, empId:'0822', name:'Muhammad Eidrus Bin Abdul Wahab', username:'0822', password:'tech123', role:'tech', team:'ASML', managerId:null, active:true },
-    { id:58, empId:'0825', name:'Muhammad Hairil Bin Samsuri', username:'0825', password:'tech123', role:'tech', team:'ASML', managerId:null, active:true },
-    { id:59, empId:'0821', name:'Gangeswaran Manikam', username:'0821', password:'tech123', role:'tech', team:'ASML', managerId:null, active:true },
-    { id:60, empId:'0835', name:'LOGANATHAN NADERAJAN', username:'0835', password:'tech123', role:'tech', team:'ASML', managerId:null, active:true },
-    { id:61, empId:'0828', name:'MUHAMMAD TAUFIQ BIN LEISAH', username:'0828', password:'tech123', role:'tech', team:'ASML', managerId:null, active:true },
-    { id:62, empId:'844', name:'Jeft Liang Jia Ching', username:'844', password:'tech123', role:'tech', team:'ASML', managerId:null, active:true },
-    { id:63, empId:'848', name:'Sia Jian Fatt', username:'848', password:'tech123', role:'tech', team:'ASML', managerId:null, active:true },
-    { id:64, empId:'858', name:'HUAI GIN SENG (JASON)', username:'858', password:'tech123', role:'tech', team:'ASML', managerId:null, active:true },
-    { id:65, empId:'859', name:'ONN YI XUN', username:'859', password:'tech123', role:'tech', team:'ASML', managerId:null, active:true },
-    { id:66, empId:'0632', name:'PHAM TIEN KHANH', username:'0632', password:'tech123', role:'tech', team:'ASML', managerId:null, active:true },
-    { id:67, empId:'0634', name:'HO NGUYEN CUONG', username:'0634', password:'tech123', role:'tech', team:'ASML', managerId:null, active:true },
-    { id:68, empId:'0870', name:'PRABAHAR GUNASEGARAN', username:'0870', password:'tech123', role:'tech', team:'ASML', managerId:null, active:true },
-    { id:69, empId:'0878', name:'LODGANATH SANDARAN', username:'0878', password:'tech123', role:'tech', team:'ASML', managerId:null, active:true },
-    { id:70, empId:'860', name:'MUHAMMAD HASIF BIN ABDUL RAHMAN', username:'860', password:'tech123', role:'tech', team:'ASML', managerId:null, active:true },
-    { id:71, empId:'907', name:'Saranraj Ravi Sankar', username:'907', password:'tech123', role:'tech', team:'ASML', managerId:null, active:true },
+    { id:1, empId:'0871', name:'MARLINA BINTE AHMAD', username:'0871', password:'0871', role:'admin', team:null, managerId:null, active:true },
+    { id:2, empId:'1188', name:'SACHIDANANDHAM ADITYA', username:'1188', password:'1188', role:'admin', team:null, managerId:null, active:true },
+    { id:3, empId:'0061', name:'KEVIN LEE KOK MENG', username:'0061', password:'0061', role:'manager', team:null, managerId:null, active:true },
+    { id:4, empId:'0044', name:'LIM KHAN YEE', username:'0044', password:'0044', role:'manager', team:null, managerId:null, active:true },
+    { id:10, empId:'0021', name:'KHOO GIM SOON ADRIAN', username:'0021', password:'0021', role:'tech', team:'AMHS', managerId:null, active:true },
+    { id:11, empId:'0056', name:'CHO YONG KIONG', username:'0056', password:'0056', role:'tech', team:'AMHS', managerId:null, active:true },
+    { id:12, empId:'0496', name:'LANGH BIAK LIAN', username:'0496', password:'0496', role:'tech', team:'AMHS', managerId:null, active:true },
+    { id:13, empId:'0518', name:'KOH KENG BOON', username:'0518', password:'0518', role:'tech', team:'AMHS', managerId:null, active:true },
+    { id:14, empId:'0553', name:'CHONG HAN KIANG', username:'0553', password:'0553', role:'tech', team:'AMHS', managerId:null, active:true },
+    { id:15, empId:'0651', name:'RAVIKUMAR RAJESH KUMAR', username:'0651', password:'0651', role:'tech', team:'AMHS', managerId:null, active:true },
+    { id:16, empId:'0002', name:'IMRAN GAZI', username:'0002', password:'0002', role:'tech', team:'AMHS', managerId:null, active:true },
+    { id:17, empId:'0003', name:'ALAM SHAHIN', username:'0003', password:'0003', role:'tech', team:'AMHS', managerId:null, active:true },
+    { id:18, empId:'0885', name:'YAN QINGQING', username:'0885', password:'0885', role:'tech', team:'AMHS', managerId:null, active:true },
+    { id:19, empId:'0474', name:'CHAN MAW', username:'0474', password:'0474', role:'tech', team:'ATTACHMENT', managerId:null, active:true },
+    { id:20, empId:'783', name:'KYI SOE HAN', username:'783', password:'783', role:'tech', team:'ATTACHMENT', managerId:null, active:true },
+    { id:21, empId:'1216', name:'Aung Ko Ko', username:'1216', password:'1216', role:'tech', team:'ATTACHMENT', managerId:null, active:true },
+    { id:22, empId:'0640', name:'NGUYEN HOANG MINH CUONG', username:'0640', password:'0640', role:'tech', team:'ATTACHMENT', managerId:null, active:true },
+    { id:23, empId:'0641', name:'NGUYEN HUU TAM', username:'0641', password:'0641', role:'tech', team:'ATTACHMENT', managerId:null, active:true },
+    { id:24, empId:'0022', name:'TAM WEE CHOR', username:'0022', password:'0022', role:'tech', team:'ASML', managerId:null, active:true },
+    { id:25, empId:'0028', name:'ZHANG HANFENG', username:'0028', password:'0028', role:'tech', team:'ASML', managerId:null, active:true },
+    { id:26, empId:'0035', name:'QUEK WEI LIAN', username:'0035', password:'0035', role:'tech', team:'ASML', managerId:null, active:true },
+    { id:27, empId:'0037', name:'ASYRAF MUHAMMAD BIN SAIDI', username:'0037', password:'0037', role:'tech', team:'ASML', managerId:null, active:true },
+    { id:28, empId:'0045', name:'LAI YIN TECK', username:'0045', password:'0045', role:'tech', team:'ASML', managerId:null, active:true },
+    { id:29, empId:'0054', name:'PANG GEE YNG', username:'0054', password:'0054', role:'tech', team:'ASML', managerId:null, active:true },
+    { id:30, empId:'0055', name:'SOO TONG EE', username:'0055', password:'0055', role:'tech', team:'ASML', managerId:null, active:true },
+    { id:31, empId:'0092', name:'YONG KOK FONG', username:'0092', password:'0092', role:'tech', team:'ASML', managerId:null, active:true },
+    { id:32, empId:'0137', name:'TASMIN CHANDRAN', username:'0137', password:'0137', role:'tech', team:'ASML', managerId:null, active:true },
+    { id:33, empId:'0139', name:'SEAH WEN HONG', username:'0139', password:'0139', role:'tech', team:'ASML', managerId:null, active:true },
+    { id:34, empId:'0144', name:'HO SIEW CHANG', username:'0144', password:'0144', role:'tech', team:'ASML', managerId:null, active:true },
+    { id:35, empId:'0162', name:'KOH GOON SENG', username:'0162', password:'0162', role:'tech', team:'ASML', managerId:null, active:true },
+    { id:36, empId:'0279', name:'LEE SHANG CHENG', username:'0279', password:'0279', role:'tech', team:'ASML', managerId:null, active:true },
+    { id:37, empId:'0280', name:'JOHN MICHAEL PAMINTUAN TORRES', username:'0280', password:'0280', role:'tech', team:'ASML', managerId:null, active:true },
+    { id:38, empId:'0375', name:'HO WEI SIONG', username:'0375', password:'0375', role:'tech', team:'ASML', managerId:null, active:true },
+    { id:39, empId:'0452', name:'GOH WEI XIANG, MATTHIAS', username:'0452', password:'0452', role:'tech', team:'ASML', managerId:null, active:true },
+    { id:40, empId:'0470', name:'PAVITHRAN PALANIANDY', username:'0470', password:'0470', role:'tech', team:'ASML', managerId:null, active:true },
+    { id:41, empId:'0479', name:'LUISITO CASTRO DELA CRUZ', username:'0479', password:'0479', role:'tech', team:'ASML', managerId:null, active:true },
+    { id:42, empId:'0093', name:'JI PENG LI', username:'0093', password:'0093', role:'tech', team:'ASML', managerId:null, active:true },
+    { id:43, empId:'0560', name:'TAN WOON TER', username:'0560', password:'0560', role:'tech', team:'ASML', managerId:null, active:true },
+    { id:44, empId:'0669', name:'FONG CHEN KIONG', username:'0669', password:'0669', role:'tech', team:'ASML', managerId:null, active:true },
+    { id:45, empId:'0694', name:'RAM KUMAR ASYTHAMBY', username:'0694', password:'0694', role:'tech', team:'ASML', managerId:null, active:true },
+    { id:46, empId:'0712', name:'LO KIM POH', username:'0712', password:'0712', role:'tech', team:'ASML', managerId:null, active:true },
+    { id:47, empId:'0713', name:'LIANG JIACHUN', username:'0713', password:'0713', role:'tech', team:'ASML', managerId:null, active:true },
+    { id:48, empId:'0726', name:'FAN WEI', username:'0726', password:'0726', role:'tech', team:'ASML', managerId:null, active:true },
+    { id:49, empId:'0736', name:'SIH TIAN SHI', username:'0736', password:'0736', role:'tech', team:'ASML', managerId:null, active:true },
+    { id:50, empId:'0747', name:'MOHAMMED SHAFIQ bin MD SULTAN', username:'0747', password:'0747', role:'tech', team:'ASML', managerId:null, active:true },
+    { id:51, empId:'0742', name:'Benny Tan Beng Teck', username:'0742', password:'0742', role:'tech', team:'ASML', managerId:null, active:true },
+    { id:52, empId:'0757', name:'Chan Ding Xuan', username:'0757', password:'0757', role:'tech', team:'ASML', managerId:null, active:true },
+    { id:53, empId:'0779', name:'Faris Sharyl bin Ismail', username:'0779', password:'0779', role:'tech', team:'ASML', managerId:null, active:true },
+    { id:54, empId:'0778', name:'Eugene Ng', username:'0778', password:'0778', role:'tech', team:'ASML', managerId:null, active:true },
+    { id:55, empId:'0780', name:'Kho Yiap Wei', username:'0780', password:'0780', role:'tech', team:'ASML', managerId:null, active:true },
+    { id:56, empId:'0781', name:'CHIN WAI KEAT', username:'0781', password:'0781', role:'tech', team:'ASML', managerId:null, active:true },
+    { id:57, empId:'0822', name:'Muhammad Eidrus Bin Abdul Wahab', username:'0822', password:'0822', role:'tech', team:'ASML', managerId:null, active:true },
+    { id:58, empId:'0825', name:'Muhammad Hairil Bin Samsuri', username:'0825', password:'0825', role:'tech', team:'ASML', managerId:null, active:true },
+    { id:59, empId:'0821', name:'Gangeswaran Manikam', username:'0821', password:'0821', role:'tech', team:'ASML', managerId:null, active:true },
+    { id:60, empId:'0835', name:'LOGANATHAN NADERAJAN', username:'0835', password:'0835', role:'tech', team:'ASML', managerId:null, active:true },
+    { id:61, empId:'0828', name:'MUHAMMAD TAUFIQ BIN LEISAH', username:'0828', password:'0828', role:'tech', team:'ASML', managerId:null, active:true },
+    { id:62, empId:'844', name:'Jeft Liang Jia Ching', username:'844', password:'844', role:'tech', team:'ASML', managerId:null, active:true },
+    { id:63, empId:'848', name:'Sia Jian Fatt', username:'848', password:'848', role:'tech', team:'ASML', managerId:null, active:true },
+    { id:64, empId:'858', name:'HUAI GIN SENG (JASON)', username:'858', password:'858', role:'tech', team:'ASML', managerId:null, active:true },
+    { id:65, empId:'859', name:'ONN YI XUN', username:'859', password:'859', role:'tech', team:'ASML', managerId:null, active:true },
+    { id:66, empId:'0632', name:'PHAM TIEN KHANH', username:'0632', password:'0632', role:'tech', team:'ASML', managerId:null, active:true },
+    { id:67, empId:'0634', name:'HO NGUYEN CUONG', username:'0634', password:'0634', role:'tech', team:'ASML', managerId:null, active:true },
+    { id:68, empId:'0870', name:'PRABAHAR GUNASEGARAN', username:'0870', password:'0870', role:'tech', team:'ASML', managerId:null, active:true },
+    { id:69, empId:'0878', name:'LODGANATH SANDARAN', username:'0878', password:'0878', role:'tech', team:'ASML', managerId:null, active:true },
+    { id:70, empId:'860', name:'MUHAMMAD HASIF BIN ABDUL RAHMAN', username:'860', password:'860', role:'tech', team:'ASML', managerId:null, active:true },
+    { id:71, empId:'907', name:'Saranraj Ravi Sankar', username:'907', password:'907', role:'tech', team:'ASML', managerId:null, active:true },
   ],
   teams: ['AMHS','ATTACHMENT','ASML'],
   countries:  ['Singapore','USA','Netherlands','China','Japan','Ireland','Taiwan','Korea','Israel'],
-  customers:  ['HQ','Micron','GF','Muratec','UMC'],
+  customers:  ['HQ','Micron','GF','SSW','UMC','SOITEC','VSMC','STM','TSMC','Nearfield','Intel','ASML','Sony','YMTC','Samsung'],
   equipment:  ['SRC','G Series','Stocker','EUV','Cannon','Photo','Metrology'],
   standbyTypes: ['Standby','Annual Leave','Medical','Off in Lieu','Carry Forward Leave','Birthday Leave','Unpaid Leave'],
   leaveTypes: ['Annual Leave','Medical','Off in Lieu','Carry Forward Leave','Birthday Leave','Unpaid Leave'],
@@ -125,6 +125,11 @@ const isLeave= type => Store.leaveTypes.includes(type);
 // Country dropdown for timesheet rows
 function countryOptions(sel) {
   return `<option value="">–</option>` + Store.countries.map(c=>`<option value="${c}" ${sel===c?'selected':''}>${c}</option>`).join('');
+}
+
+// Customer dropdown for timesheet rows
+function customerOptions(sel) {
+  return `<option value="">–</option>` + Store.customers.map(c=>`<option value="${c}" ${sel===c?'selected':''}>${c}</option>`).join('');
 }
 
 // Numeric hours dropdown (0–16 in 0.5 steps)
@@ -192,7 +197,6 @@ function tryLogin(u, p) {
   $('app').classList.add('active');
   bootApp();
 }
-function fillDemo(u,p) { $('lu').value=u; $('lp').value=p; }
 function logout() {
   me=null;
   $('app').classList.remove('active');
@@ -504,6 +508,10 @@ function renderTsActions(ts, editable) {
   el.innerHTML = '';
   const mkBtn = (cls,txt,fn) => { const b=document.createElement('button'); b.className=`btn btn-sm ${cls}`; b.textContent=txt; b.onclick=fn; el.appendChild(b); };
   if (editable && ts?.entries.length) mkBtn('btn-primary','Submit for Approval',()=>submitTs(ts.id));
+  if (ts && (me.role==='manager' || me.role==='admin')) {
+    mkBtn('btn-ghost','📊 Export Excel',()=>exportExcel(ts.id));
+    mkBtn('btn-ghost','🖨 Print',()=>openPrintTab(ts.id));
+  }
 }
 
 function renderTsSummary(ts) {
@@ -655,8 +663,7 @@ function buildRow(e, ts, editable) {
         <select class="ts-input tsx-ctry" onchange="upd(${ts.id},${e.id},'country',this.value)">${countryOptions(e.country)}</select>
       </td>
       <td>
-        <input class="ts-input tsx-tp" type="text" value="${e.customer||''}"
-          onchange="upd(${ts.id},${e.id},'customer',this.value)">
+        <select class="ts-input tsx-ctry" onchange="upd(${ts.id},${e.id},'customer',this.value)">${customerOptions(e.customer)}</select>
       </td>
       <td>
         <input class="ts-input tsx-tp" type="text" value="${e.equipment||''}"
@@ -1071,8 +1078,8 @@ function buildAplTable(month, year) {
   const team = teamUsers();
   if (!team.length) return '<div class="empty"><div class="empty-ico">👥</div><p>No team members found</p></div>';
   const groups = Store.teams.map(g => ({ name:g, members:team.filter(u=>u.team===g) })).filter(g=>g.members.length);
-  return `<table class="apple-table">
-    <thead><tr><th>Employee</th><th>Status</th><th>OT 1.5×</th><th>OT 2.0×</th><th></th></tr></thead>
+  return `<table class="apple-table apl-table">
+    <thead><tr><th>Employee</th><th>Status</th><th>OT 1.5×</th><th>OT 2.0×</th><th class="apl-actions-h">Actions</th></tr></thead>
     <tbody>${groups.map(g=>`
       <tr class="apl-team-row"><td colspan="5">${g.name} <span class="td-muted" style="font-weight:500">(${g.members.length})</span></td></tr>
       ${g.members.map(u=>{
@@ -1087,7 +1094,10 @@ function buildAplTable(month, year) {
             : `<span class="pill pill-draft"><span class="pill-dot dot-draft"></span>not started</span>`}</td>
           <td><span class="ot-tag ot-tag-15">${fmt(o15)}h</span></td>
           <td><span class="ot-tag ot-tag-20">${fmt(o20)}h</span></td>
-          <td>${ts ? `<button class="btn btn-sm btn-ghost" onclick="openReviewTab(${ts.id})">Review →</button>` : ''}</td>
+          <td class="apl-actions">${ts ? `
+            <button class="btn btn-sm btn-ghost" onclick="openReviewTab(${ts.id})">Review</button>
+            <button class="btn btn-sm btn-ghost" onclick="exportExcel(${ts.id})">Excel</button>
+            <button class="btn btn-sm btn-ghost" onclick="openPrintTab(${ts.id})">Print</button>` : ''}</td>
         </tr>`;
       }).join('')}`).join('')}</tbody>
   </table>`;
@@ -1111,7 +1121,7 @@ function reviewRowHtml(e) {
     <td><select class="ts-input tsx-hrs" data-e="${e.id}" data-f="workHrs">${reviewHourOptions(e.workHrs)}</select></td>
     <td><select class="ts-input tsx-hrs" data-e="${e.id}" data-f="sbHrs">${reviewHourOptions(e.sbHrs)}</select></td>
     <td><select class="ts-input tsx-ctry" data-e="${e.id}" data-f="country">${countryOptions(e.country)}</select></td>
-    <td>${inp('customer','tsx-tp',e.customer)}</td>
+    <td><select class="ts-input tsx-ctry" data-e="${e.id}" data-f="customer">${customerOptions(e.customer)}</select></td>
     <td>${inp('equipment','tsx-tp',e.equipment)}</td>
     <td class="tsx-act-cell"><textarea class="ts-input tsx-act" rows="1" data-e="${e.id}" data-f="description">${e.description||''}</textarea></td>
     <td><input class="ts-input tsx-sm" type="number" min="0" max="24" step="0.5" data-e="${e.id}" data-f="nightHrs" value="${e.nightHrs||0}"></td>
@@ -1135,6 +1145,106 @@ function reviewTotals(ts) {
     o15: ts.entries.reduce((s,e)=>s+(e.ot15||0),0),
     o20: ts.entries.reduce((s,e)=>s+(e.ot20||0),0),
   };
+}
+
+function exportExcel(tsId) {
+  const ts = Store.timesheets.find(t=>t.id===tsId);
+  if (!ts) return;
+  recalcTs(ts);
+  const u = userBy(ts.userId);
+  const esc = v => String(v===undefined||v===null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const head = ['Date','Day','Deployed Hrs','Standby Hrs','Country','Customer','EQ','Activity',
+                'Night Shift Hrs','Night Shift OT Hrs','OT 1.5x','OT 2.0x','Meal Lunch','Meal Dinner',
+                'Transport From','Transport To','Transport Preapproved','Shift Allowance','Remarks'];
+  const rows = ts.entries.map(e=>[
+    e.date||'', e.date?DAYS[dow(e.date)]:'', e.workHrs||0, e.sbHrs||0,
+    e.country||'', e.customer||'', e.equipment||'', e.description||'',
+    e.nightHrs||0, e.nightOtHrs||0, e.ot15||0, e.ot20||0,
+    e.mealLunch||0, e.mealDinner||0, e.tpFrom||'', e.tpTo||'', e.tpPre||'', e.shiftAllowance||'', e.remarks||''
+  ]);
+  const t = reviewTotals(ts);
+  let html = `<html xmlns:x="urn:schemas-microsoft-com:office:excel"><head><meta charset="UTF-8"></head><body>`;
+  html += `<table border="1">`;
+  html += `<tr><td colspan="19"><b>BHS Kinetic — Timesheet · ${esc(u?.name)} (${esc(u?.empId)}) · ${MONTHS[ts.month-1]} ${ts.year} · Status: ${esc(ts.status.toUpperCase())}</b></td></tr>`;
+  html += `<tr><td colspan="19">Deployed: ${fmt(t.dep)}h · Standby: ${fmt(t.sb)}h · OT1.5: ${fmt(t.o15)}h · OT2.0: ${fmt(t.o20)}h</td></tr>`;
+  html += `<tr>${head.map(h=>`<th><b>${h}</b></th>`).join('')}</tr>`;
+  rows.forEach(r=>{ html += `<tr>${r.map(c=>`<td>${esc(c)}</td>`).join('')}</tr>`; });
+  html += `</table></body></html>`;
+  const blob = new Blob(['\ufeff'+html], {type:'application/vnd.ms-excel'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `Timesheet_${(u?.empId||'')}_${MONTHS[ts.month-1]}_${ts.year}.xls`;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 500);
+  toast('Excel exported 📊','success');
+}
+
+function openPrintTab(tsId) {
+  const ts = Store.timesheets.find(t=>t.id===tsId);
+  if (!ts) return;
+  recalcTs(ts);
+  const u = userBy(ts.userId);
+  const t = reviewTotals(ts);
+  const win = window.open('', '_blank');
+  if (!win) { toast('Please allow pop-ups to open the print view.','error'); return; }
+  const doc = win.document;
+  const cell = v => (v===undefined||v===null||v==='') ? '–' : v;
+  doc.open();
+  doc.write(`<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <base href="${document.baseURI}">
+    <title>Timesheet — ${u?.name} · ${MONTHS[ts.month-1]} ${ts.year}</title>
+    <link rel="stylesheet" href="styles.css?v=15">
+    </head><body style="background:#fff">
+    <div class="page-wrap">
+      <div class="sec-header">
+        <div class="sec-title"><h1>${u?.name} <span style="font-weight:500;font-size:1rem;color:var(--text-secondary)">(${u?.empId})</span></h1>
+        <p>${MONTHS[ts.month-1]} ${ts.year} · Status: ${ts.status.toUpperCase()}</p></div>
+      </div>
+      <div class="ts-meta-row">
+        <div class="ts-meta-item"><div class="ts-meta-val">${fmt(t.dep)}h</div><div class="ts-meta-lbl">Deployed</div></div>
+        <div class="ts-meta-item"><div class="ts-meta-val">${fmt(t.sb)}h</div><div class="ts-meta-lbl">Standby</div></div>
+        <div class="ts-meta-item"><div class="ts-meta-val" style="color:var(--ot15)">${fmt(t.o15)}h</div><div class="ts-meta-lbl">OT 1.5×</div></div>
+        <div class="ts-meta-item"><div class="ts-meta-val" style="color:var(--ot20)">${fmt(t.o20)}h</div><div class="ts-meta-lbl">OT 2.0×</div></div>
+      </div>
+      <div class="card"><div class="ts-table-wrap">
+        <table class="apple-table ts-table ts-table-tech">
+          <thead>
+          <tr>
+            <th rowspan="2">Date</th><th rowspan="2">Deployed<br>Hrs</th><th rowspan="2">Standby<br>Hrs</th>
+            <th rowspan="2">Country</th><th rowspan="2">Customer</th><th rowspan="2">EQ</th>
+            <th rowspan="2">Activity</th><th rowspan="2">Night<br>Shift Hrs</th><th rowspan="2">Night<br>Shift OT</th>
+            <th rowspan="2">OT<br>1.5×</th><th rowspan="2">OT<br>2.0×</th>
+            <th rowspan="2">Meal<br>Lunch</th><th rowspan="2">Meal<br>Dinner</th>
+            <th colspan="3">Transport Claim</th><th rowspan="2">Shift<br>Allowance</th><th rowspan="2">Remarks</th>
+          </tr>
+          <tr><th>From</th><th>To</th><th>Preapproved</th></tr>
+          </thead>
+          <tbody>${ts.entries.map(e=>{
+            const sunday = e.date && dow(e.date)===0;
+            const cls = [isHol(e.date)?'row-holiday':'', sunday?'row-sunday':''].filter(Boolean).join(' ');
+            return `<tr class="${cls}">
+              <td class="ts-day-cell"><strong>${fmtD(e.date)}</strong><span class="ts-day-name">${e.date?DAYS[dow(e.date)]:''}</span></td>
+              <td style="text-align:center">${fmt(e.workHrs||0)}</td>
+              <td style="text-align:center">${fmt(e.sbHrs||0)}</td>
+              <td>${cell(e.country)}</td><td>${cell(e.customer)}</td><td>${cell(e.equipment)}</td>
+              <td>${cell(e.description)}</td>
+              <td style="text-align:center">${e.nightHrs||'–'}</td>
+              <td style="text-align:center">${e.nightOtHrs||'–'}</td>
+              <td style="text-align:center">${e.ot15>0?fmt(e.ot15)+'h':'–'}</td>
+              <td style="text-align:center">${e.ot20>0?fmt(e.ot20)+'h':'–'}</td>
+              <td style="text-align:center">${e.mealLunch?'1':'–'}</td>
+              <td style="text-align:center">${e.mealDinner?'1':'–'}</td>
+              <td>${cell(e.tpFrom)}</td><td>${cell(e.tpTo)}</td><td>${cell(e.tpPre)}</td>
+              <td>${cell(e.shiftAllowance)}</td><td>${cell(e.remarks)}</td>
+            </tr>`;
+          }).join('')}</tbody>
+        </table>
+      </div></div>
+    </div></body></html>`);
+  doc.close();
+  win.onload = () => setTimeout(()=>win.print(), 300);
 }
 
 function openReviewTab(tsId) {
@@ -1272,34 +1382,84 @@ function openReviewTab(tsId) {
 function renderAnalytics(el) {
   el.innerHTML = `
     <div class="sec-header">
-      <div class="sec-title"><h1>Analytics</h1><p>OT hours breakdown across teams, countries and work locations</p></div>
+      <div class="sec-title"><h1>Analytics</h1><p>OT clocked — by country, employee and customer</p></div>
       <div class="sec-actions">
-        <select class="f-select" id="an-m" onchange="redrawAnalytics()">
+        <select class="f-select" id="an-m" onchange="anMonthChanged()">
           <option value="">All Months</option>
           ${MONTHS.map((m,i)=>`<option value="${i+1}" ${i+1===tsMonth?'selected':''}>${m}</option>`).join('')}
         </select>
         <select class="f-select" id="an-y" onchange="redrawAnalytics()">
           ${[2024,2025,2026,2027].map(y=>`<option value="${y}" ${y===tsYear?'selected':''}>${y}</option>`).join('')}
         </select>
+        <select class="f-select" id="an-w" onchange="redrawAnalytics()"></select>
         <button class="btn btn-ghost" onclick="window.print()">Export PDF</button>
       </div>
     </div>
     <div id="an-body"></div>
   `;
+  anMonthChanged();
+}
+
+// Week-of-month for a date string (W1 = 1st–7th, W2 = 8th–14th, …)
+function weekOfMonth(dateStr) {
+  const day = parseInt(dateStr.slice(8,10), 10);
+  return Math.ceil(day / 7);
+}
+
+function anMonthChanged() {
+  const mF = parseInt($('an-m')?.value)||null;
+  const wSel = $('an-w');
+  if (!mF) {
+    wSel.innerHTML = '<option value="">All Weeks</option>';
+    wSel.style.display = 'none';
+  } else {
+    wSel.style.display = '';
+    const yF = parseInt($('an-y')?.value)||tsYear;
+    const daysInMonth = new Date(yF, mF, 0).getDate();
+    const nWeeks = Math.ceil(daysInMonth / 7);
+    let opts = '<option value="">All Weeks</option>';
+    for (let w=1; w<=nWeeks; w++) {
+      const from = (w-1)*7+1, to = Math.min(w*7, daysInMonth);
+      opts += `<option value="${w}">Week ${w} (${from}–${to})</option>`;
+    }
+    wSel.innerHTML = opts;
+  }
   redrawAnalytics();
+}
+
+function anTable(title, rows) {
+  return `
+    <div class="card">
+      <div class="card-head"><h3>${title}</h3></div>
+      <div class="table-scroll">
+        <table class="apple-table">
+          <thead><tr><th>${title.replace('OT by ','')}</th><th>OT 1.5×</th><th>OT 2.0×</th><th>Total OT</th></tr></thead>
+          <tbody>${rows.length ? rows.map(([nm,v])=>`
+            <tr>
+              <td><strong>${nm}</strong></td>
+              <td><span class="ot-tag ot-tag-15">${fmt(v.ot15)}h</span></td>
+              <td><span class="ot-tag ot-tag-20">${fmt(v.ot20)}h</span></td>
+              <td><strong>${fmt(v.ot15+v.ot20)}h</strong></td>
+            </tr>`).join('') : '<tr><td colspan="4" class="td-muted" style="text-align:center;padding:1.5rem">No OT clocked</td></tr>'}</tbody>
+        </table>
+      </div>
+    </div>`;
 }
 
 function redrawAnalytics() {
   const mF=parseInt($('an-m')?.value)||null;
   const yF=parseInt($('an-y')?.value)||null;
+  const wF=parseInt($('an-w')?.value)||null;
   let all=Store.timesheets.filter(t=>t.status!=='draft');
-  if (me.role==='manager') { const team=Store.users.filter(u=>u.role==='tech').map(u=>u.id); all=all.filter(t=>team.includes(t.userId)); }
   if (mF) all=all.filter(t=>t.month===mF);
   if (yF) all=all.filter(t=>t.year===yF);
-  const entries=all.flatMap(t=>t.entries.map(e=>({...e,userId:t.userId})));
+  let entries=all.flatMap(t=>t.entries.map(e=>({...e,userId:t.userId})));
+  if (mF && wF) entries = entries.filter(e=>e.date && weekOfMonth(e.date)===wF);
 
   const byCountry={}, byCustomer={}, byEmp={};
   entries.forEach(e=>{
+    const has = (e.ot15||0)+(e.ot20||0) > 0;
+    if (!has) return;
     if(e.country){ if(!byCountry[e.country]) byCountry[e.country]={ot15:0,ot20:0}; byCountry[e.country].ot15+=e.ot15||0; byCountry[e.country].ot20+=e.ot20||0; }
     if(e.customer){ if(!byCustomer[e.customer]) byCustomer[e.customer]={ot15:0,ot20:0}; byCustomer[e.customer].ot15+=e.ot15||0; byCustomer[e.customer].ot20+=e.ot20||0; }
     const nm=userBy(e.userId)?.name||'Unknown';
@@ -1307,60 +1467,21 @@ function redrawAnalytics() {
     byEmp[nm].ot15+=e.ot15||0; byEmp[nm].ot20+=e.ot20||0;
   });
 
-  const maxC=Math.max(...Object.values(byCountry).map(v=>v.ot15+v.ot20),1);
-  const maxCu=Math.max(...Object.values(byCustomer).map(v=>v.ot15+v.ot20),1);
+  const sortTot = (a,b)=>(b[1].ot15+b[1].ot20)-(a[1].ot15+a[1].ot20);
   const tot15=entries.reduce((s,e)=>s+(e.ot15||0),0);
   const tot20=entries.reduce((s,e)=>s+(e.ot20||0),0);
+  const wLbl = (mF && wF) ? ` · Week ${wF}` : '';
 
   $('an-body').innerHTML = `
     <div class="stats-row" style="margin-bottom:1.5rem">
-      <div class="stat-card"><div class="stat-accent acc-orange"></div><div class="stat-chip chip-orange">⚡</div><div class="stat-num">${fmt(tot15)}<span style="font-size:1rem;font-weight:500">h</span></div><div class="stat-lbl">Total OT 1.5×</div></div>
-      <div class="stat-card"><div class="stat-accent acc-red"></div><div class="stat-chip chip-red">🔴</div><div class="stat-num">${fmt(tot20)}<span style="font-size:1rem;font-weight:500">h</span></div><div class="stat-lbl">Total OT 2.0×</div></div>
-      <div class="stat-card"><div class="stat-accent acc-blue"></div><div class="stat-chip chip-blue">📊</div><div class="stat-num">${fmt(tot15+tot20)}<span style="font-size:1rem;font-weight:500">h</span></div><div class="stat-lbl">Combined OT</div></div>
+      <div class="stat-card"><div class="stat-accent acc-orange"></div><div class="stat-chip chip-orange">⚡</div><div class="stat-num">${fmt(tot15)}<span style="font-size:1rem;font-weight:500">h</span></div><div class="stat-lbl">Total OT 1.5×${wLbl}</div></div>
+      <div class="stat-card"><div class="stat-accent acc-red"></div><div class="stat-chip chip-red">🔴</div><div class="stat-num">${fmt(tot20)}<span style="font-size:1rem;font-weight:500">h</span></div><div class="stat-lbl">Total OT 2.0×${wLbl}</div></div>
+      <div class="stat-card"><div class="stat-accent acc-blue"></div><div class="stat-chip chip-blue">📊</div><div class="stat-num">${fmt(tot15+tot20)}<span style="font-size:1rem;font-weight:500">h</span></div><div class="stat-lbl">Combined OT${wLbl}</div></div>
     </div>
-    <div class="an-grid">
-      <div class="card">
-        <div class="card-head"><h3>By Country</h3></div>
-        <div class="card-body">
-          <div class="an-legend"><div class="an-legend-item"><div class="an-legend-dot" style="background:var(--ot15)"></div>OT 1.5×</div><div class="an-legend-item"><div class="an-legend-dot" style="background:var(--ot20)"></div>OT 2.0×</div></div>
-          ${Object.entries(byCountry).sort((a,b)=>(b[1].ot15+b[1].ot20)-(a[1].ot15+a[1].ot20)).map(([c,v])=>`
-            <div class="an-bar-item">
-              <div class="an-bar-label-row"><span class="an-bar-name">${c}</span><div class="an-bar-vals"><span class="ot-tag ot-tag-15" style="font-size:0.73rem">${fmt(v.ot15)}h</span><span class="ot-tag ot-tag-20" style="font-size:0.73rem">${fmt(v.ot20)}h</span></div></div>
-              <div class="an-track"><div class="an-fill an-fill-15" style="width:${(v.ot15/maxC)*100}%"></div><div class="an-fill an-fill-20" style="width:${(v.ot20/maxC)*100}%"></div></div>
-            </div>`).join('')||'<p class="td-muted" style="font-size:0.85rem">No data</p>'}
-        </div>
-      </div>
-      <div class="card">
-        <div class="card-head"><h3>By Work Location</h3></div>
-        <div class="card-body">
-          <div class="an-legend"><div class="an-legend-item"><div class="an-legend-dot" style="background:var(--ot15)"></div>OT 1.5×</div><div class="an-legend-item"><div class="an-legend-dot" style="background:var(--ot20)"></div>OT 2.0×</div></div>
-          ${Object.entries(byCustomer).sort((a,b)=>(b[1].ot15+b[1].ot20)-(a[1].ot15+a[1].ot20)).map(([c,v])=>`
-            <div class="an-bar-item">
-              <div class="an-bar-label-row"><span class="an-bar-name">${c}</span><div class="an-bar-vals"><span class="ot-tag ot-tag-15" style="font-size:0.73rem">${fmt(v.ot15)}h</span><span class="ot-tag ot-tag-20" style="font-size:0.73rem">${fmt(v.ot20)}h</span></div></div>
-              <div class="an-track"><div class="an-fill an-fill-15" style="width:${(v.ot15/maxCu)*100}%"></div><div class="an-fill an-fill-20" style="width:${(v.ot20/maxCu)*100}%"></div></div>
-            </div>`).join('')||'<p class="td-muted" style="font-size:0.85rem">No data</p>'}
-        </div>
-      </div>
-    </div>
-    <div class="card">
-      <div class="card-head"><h3>Employee OT Summary</h3></div>
-      <div class="table-scroll">
-        <table class="apple-table">
-          <thead><tr><th>Employee</th><th>Role</th><th>Manager</th><th>OT 1.5× Hrs</th><th>OT 2.0× Hrs</th><th>Total OT</th></tr></thead>
-          <tbody>${Object.entries(byEmp).map(([nm,v])=>{
-            const u=Store.users.find(x=>x.name===nm);
-            const mgr=u?userBy(u.managerId):null;
-            return `<tr>
-              <td><strong>${nm}</strong></td>
-              <td><span class="pill pill-${u?.role==='admin'?'approved':u?.role==='manager'?'submitted':'draft'}" style="font-size:0.7rem">${u?.role||'–'}</span></td>
-              <td class="td-muted">${mgr?.name||'–'}</td>
-              <td><span class="ot-tag ot-tag-15">${fmt(v.ot15)}h</span></td>
-              <td><span class="ot-tag ot-tag-20">${fmt(v.ot20)}h</span></td>
-              <td><strong>${fmt(v.ot15+v.ot20)}h</strong></td>
-            </tr>`;
-          }).join('')}</tbody>
-        </table>
-      </div>
+    <div style="display:flex;flex-direction:column;gap:1.1rem">
+      ${anTable('OT by Country', Object.entries(byCountry).sort(sortTot))}
+      ${anTable('OT by Employee', Object.entries(byEmp).sort(sortTot))}
+      ${anTable('OT by Customer', Object.entries(byCustomer).sort(sortTot))}
     </div>
   `;
 }

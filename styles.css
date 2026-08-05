@@ -1335,3 +1335,14 @@ td.tsx-act-cell { width: 100%; }
   padding: 0.55rem 1rem !important;
   border-top: 1px solid var(--border);
 }
+
+/* ── Approvals table layout ─────────────────────────────────── */
+.apl-table { table-layout: fixed; }
+.apl-table th:nth-child(1) { width: 34%; }
+.apl-table th:nth-child(2) { width: 15%; }
+.apl-table th:nth-child(3),
+.apl-table th:nth-child(4) { width: 11%; }
+.apl-table th.apl-actions-h { width: 29%; text-align: right; padding-right: 1.2rem; }
+.apl-table td { overflow: hidden; text-overflow: ellipsis; }
+.apl-actions { text-align: right; white-space: nowrap; padding-right: 1rem !important; }
+.apl-actions .btn { margin-left: 0.35rem; padding: 0.32rem 0.7rem; font-size: 0.75rem; }
