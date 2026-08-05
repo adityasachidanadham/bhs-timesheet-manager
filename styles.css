@@ -1460,3 +1460,56 @@ td.tsx-act-cell { width: 100%; }
   white-space: nowrap;
   transform: skewX(-6deg);
 }
+
+/* ── Analytics v2 layout ────────────────────────────────────── */
+.an-kpi {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 1.1rem 1.6rem;
+  margin-bottom: 1.25rem;
+  flex-wrap: wrap;
+}
+.an-kpi-item { flex: 1; min-width: 150px; }
+.an-kpi-lbl { font-size: 0.72rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 0.3rem; }
+.an-kpi-val { font-family: sans-serif; font-size: 1.7rem; font-weight: 800; letter-spacing: -0.03em; line-height: 1; font-variant-numeric: tabular-nums; }
+.an-kpi-div { width: 1px; height: 40px; background: var(--border); flex-shrink: 0; }
+
+.an-cards3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.1rem;
+  margin-bottom: 1.25rem;
+  align-items: start;
+}
+.an-card-head {
+  padding: 1rem 1.4rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  border-bottom: 1px solid var(--border);
+}
+.an-card-head h3 { font-size: 0.95rem; font-weight: 700; letter-spacing: -0.01em; }
+.an-mini-legend { display: flex; align-items: center; gap: 0.3rem; font-size: 0.75rem; font-weight: 600; color: var(--text-secondary); }
+.an-dot { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+.an-card-body { max-height: 460px; overflow-y: auto; }
+.an-bar-sub { display: flex; gap: 1rem; margin-top: 0.3rem; font-size: 0.76rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+.an-sub-15 { color: var(--ot15); }
+.an-sub-20 { color: var(--ot20); }
+
+.an-leaderboard .an-rank { font-weight: 800; font-size: 0.9rem; width: 40px; }
+.an-leaderboard .an-share-h { width: 30%; }
+.an-share-cell { min-width: 180px; }
+.an-share-track { height: 12px; }
+.an-top-row { background: var(--ot15-bg) !important; }
+
+@media (max-width: 1100px) {
+  .an-cards3 { grid-template-columns: 1fr; }
+}
+@media (max-width: 680px) {
+  .an-kpi { gap: 1rem; padding: 1rem; }
+  .an-kpi-div { display: none; }
+  .an-kpi-item { min-width: 40%; }
+  .an-share-cell, .an-share-h { display: none; }
+}

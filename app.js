@@ -863,7 +863,7 @@ function openPrintTab(tsId) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <base href="${document.baseURI}">
     <title>Timesheet — ${u?.name} · ${MONTHS[ts.month-1]} ${ts.year}</title>
-    <link rel="stylesheet" href="styles.css?v=26">
+    <link rel="stylesheet" href="styles.css?v=27">
     </head><body style="background:#fff">
     <div class="page-wrap">
       <div class="sec-header">
@@ -937,7 +937,7 @@ function openReviewTab(tsId) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <base href="${document.baseURI}">
     <title>Review — ${u?.name} · ${MONTHS[ts.month-1]} ${ts.year}</title>
-    <link rel="stylesheet" href="styles.css?v=26">
+    <link rel="stylesheet" href="styles.css?v=27">
     </head><body style="background:var(--bg)">
     <div class="page-wrap">
       <div class="sec-header">
@@ -1123,62 +1123,59 @@ function redrawAnalytics() {
   const tot20=entries.reduce((s,e)=>s+(e.ot20||0),0);
   const wLbl = (mF && wF) ? ` · Week ${wF}` : '';
 
+  const empWithOT = Object.entries(byEmp).filter(([,v])=>v.ot15+v.ot20>0).sort((a,b)=>(b[1].ot15+b[1].ot20)-(a[1].ot15+a[1].ot20));
+  const totalTechs = teamUsers().length;
+  const maxEmp = Math.max(...empWithOT.map(([,v])=>v.ot15+v.ot20),1);
+
+  const barCard = (title, obj, max) => `
+    <div class="card an-card">
+      <div class="an-card-head">
+        <h3>${title}</h3>
+        <div class="an-mini-legend"><span class="an-dot" style="background:var(--ot15)"></span>1.5×<span class="an-dot" style="background:var(--ot20);margin-left:0.6rem"></span>2.0×</div>
+      </div>
+      <div class="card-body an-card-body">
+        ${Object.entries(obj).sort((a,b)=>(b[1].ot15+b[1].ot20)-(a[1].ot15+a[1].ot20)).map(([c,v])=>`
+          <div class="an-bar-item">
+            <div class="an-bar-label-row"><span class="an-bar-name">${c}</span><span class="an-bar-total">${fmt(v.ot15+v.ot20)}h</span></div>
+            <div class="an-track"><div class="an-fill an-fill-15" style="width:${(v.ot15/max)*100}%"></div><div class="an-fill an-fill-20" style="width:${(v.ot20/max)*100}%"></div></div>
+            <div class="an-bar-sub"><span class="an-sub-15">1.5× ${fmt(v.ot15)}h</span><span class="an-sub-20">2.0× ${fmt(v.ot20)}h</span></div>
+          </div>`).join('')||'<p class="td-muted" style="font-size:0.85rem">No data</p>'}
+      </div>
+    </div>`;
+
   $('an-body').innerHTML = `
-    <div class="stats-row" style="margin-bottom:1.5rem">
-      <div class="stat-card"><div class="stat-accent acc-orange"></div><div class="stat-chip chip-orange">⚡</div><div class="stat-num">${fmt(tot15)}<span style="font-size:1rem;font-weight:500">h</span></div><div class="stat-lbl">Total OT 1.5×${wLbl}</div></div>
-      <div class="stat-card"><div class="stat-accent acc-red"></div><div class="stat-chip chip-red">🔴</div><div class="stat-num">${fmt(tot20)}<span style="font-size:1rem;font-weight:500">h</span></div><div class="stat-lbl">Total OT 2.0×${wLbl}</div></div>
-      <div class="stat-card"><div class="stat-accent acc-blue"></div><div class="stat-chip chip-blue">📊</div><div class="stat-num">${fmt(tot15+tot20)}<span style="font-size:1rem;font-weight:500">h</span></div><div class="stat-lbl">Combined OT${wLbl}</div></div>
+    <div class="card an-kpi">
+      <div class="an-kpi-item"><div class="an-kpi-lbl">OT 1.5×${wLbl}</div><div class="an-kpi-val" style="color:var(--ot15)">${fmt(tot15)}h</div></div>
+      <div class="an-kpi-div"></div>
+      <div class="an-kpi-item"><div class="an-kpi-lbl">OT 2.0×${wLbl}</div><div class="an-kpi-val" style="color:var(--ot20)">${fmt(tot20)}h</div></div>
+      <div class="an-kpi-div"></div>
+      <div class="an-kpi-item"><div class="an-kpi-lbl">Combined OT${wLbl}</div><div class="an-kpi-val" style="color:var(--bhs-navy)">${fmt(tot15+tot20)}h</div></div>
+      <div class="an-kpi-div"></div>
+      <div class="an-kpi-item"><div class="an-kpi-lbl">Employees with OT</div><div class="an-kpi-val" style="color:var(--bhs-blue-mid)">${empWithOT.length} of ${totalTechs}</div></div>
     </div>
-    <div class="an-grid">
-      <div class="card">
-        <div class="card-head"><h3>By Country</h3></div>
-        <div class="card-body">
-          <div class="an-legend"><div class="an-legend-item"><div class="an-legend-dot" style="background:var(--ot15)"></div>OT 1.5×</div><div class="an-legend-item"><div class="an-legend-dot" style="background:var(--ot20)"></div>OT 2.0×</div></div>
-          ${Object.entries(byCountry).sort((a,b)=>(b[1].ot15+b[1].ot20)-(a[1].ot15+a[1].ot20)).map(([c,v])=>`
-            <div class="an-bar-item">
-              <div class="an-bar-label-row"><span class="an-bar-name">${c}</span><div class="an-bar-vals"><span class="ot-tag ot-tag-15">1.5× ${fmt(v.ot15)}h</span><span class="ot-tag ot-tag-20">2.0× ${fmt(v.ot20)}h</span><span class="an-bar-total">${fmt(v.ot15+v.ot20)}h</span></div></div>
-              <div class="an-track"><div class="an-fill an-fill-15" style="width:${(v.ot15/maxC)*100}%"></div><div class="an-fill an-fill-20" style="width:${(v.ot20/maxC)*100}%"></div></div>
-            </div>`).join('')||'<p class="td-muted" style="font-size:0.85rem">No data</p>'}
-        </div>
-      </div>
-      <div class="card">
-        <div class="card-head"><h3>By Customer</h3></div>
-        <div class="card-body">
-          <div class="an-legend"><div class="an-legend-item"><div class="an-legend-dot" style="background:var(--ot15)"></div>OT 1.5×</div><div class="an-legend-item"><div class="an-legend-dot" style="background:var(--ot20)"></div>OT 2.0×</div></div>
-          ${Object.entries(byCustomer).sort((a,b)=>(b[1].ot15+b[1].ot20)-(a[1].ot15+a[1].ot20)).map(([c,v])=>`
-            <div class="an-bar-item">
-              <div class="an-bar-label-row"><span class="an-bar-name">${c}</span><div class="an-bar-vals"><span class="ot-tag ot-tag-15">1.5× ${fmt(v.ot15)}h</span><span class="ot-tag ot-tag-20">2.0× ${fmt(v.ot20)}h</span><span class="an-bar-total">${fmt(v.ot15+v.ot20)}h</span></div></div>
-              <div class="an-track"><div class="an-fill an-fill-15" style="width:${(v.ot15/maxCu)*100}%"></div><div class="an-fill an-fill-20" style="width:${(v.ot20/maxCu)*100}%"></div></div>
-            </div>`).join('')||'<p class="td-muted" style="font-size:0.85rem">No data</p>'}
-        </div>
-      </div>
-      <div class="card">
-        <div class="card-head"><h3>By Equipment (EQ)</h3></div>
-        <div class="card-body">
-          <div class="an-legend"><div class="an-legend-item"><div class="an-legend-dot" style="background:var(--ot15)"></div>OT 1.5×</div><div class="an-legend-item"><div class="an-legend-dot" style="background:var(--ot20)"></div>OT 2.0×</div></div>
-          ${Object.entries(byEq).sort((a,b)=>(b[1].ot15+b[1].ot20)-(a[1].ot15+a[1].ot20)).map(([c,v])=>`
-            <div class="an-bar-item">
-              <div class="an-bar-label-row"><span class="an-bar-name">${c}</span><div class="an-bar-vals"><span class="ot-tag ot-tag-15">1.5× ${fmt(v.ot15)}h</span><span class="ot-tag ot-tag-20">2.0× ${fmt(v.ot20)}h</span><span class="an-bar-total">${fmt(v.ot15+v.ot20)}h</span></div></div>
-              <div class="an-track"><div class="an-fill an-fill-15" style="width:${(v.ot15/maxEq)*100}%"></div><div class="an-fill an-fill-20" style="width:${(v.ot20/maxEq)*100}%"></div></div>
-            </div>`).join('')||'<p class="td-muted" style="font-size:0.85rem">No data</p>'}
-        </div>
-      </div>
+    <div class="an-cards3">
+      ${barCard('By Country', byCountry, maxC)}
+      ${barCard('By Customer', byCustomer, maxCu)}
+      ${barCard('By Equipment (EQ)', byEq, maxEq)}
     </div>
     <div class="card">
-      <div class="card-head"><h3>Employee OT Summary</h3></div>
+      <div class="an-card-head"><h3>Employee OT Summary</h3><span class="td-muted" style="font-size:0.78rem">Only employees with OT</span></div>
       <div class="table-scroll">
-        <table class="apple-table">
-          <thead><tr><th>Employee</th><th>Team</th><th>OT 1.5× Hrs</th><th>OT 2.0× Hrs</th><th>Total OT</th></tr></thead>
-          <tbody>${Object.entries(byEmp).sort((a,b)=>(b[1].ot15+b[1].ot20)-(a[1].ot15+a[1].ot20)).map(([nm,v])=>{
+        <table class="apple-table an-leaderboard">
+          <thead><tr><th>#</th><th>Employee</th><th>Team</th><th>OT 1.5×</th><th>OT 2.0×</th><th>Total</th><th class="an-share-h">Share</th></tr></thead>
+          <tbody>${empWithOT.map(([nm,v],i)=>{
             const u=Store.users.find(x=>x.name===nm);
-            return `<tr>
+            const tot=v.ot15+v.ot20;
+            return `<tr class="${i===0?'an-top-row':''}">
+              <td class="td-muted an-rank">${i+1}</td>
               <td><strong>${nm}</strong></td>
               <td class="td-muted">${u?.team||'–'}</td>
               <td><span class="ot-tag ot-tag-15">${fmt(v.ot15)}h</span></td>
               <td><span class="ot-tag ot-tag-20">${fmt(v.ot20)}h</span></td>
-              <td><strong>${fmt(v.ot15+v.ot20)}h</strong></td>
+              <td><strong>${fmt(tot)}h</strong></td>
+              <td class="an-share-cell"><div class="an-track an-share-track"><div class="an-fill an-fill-15" style="width:${(v.ot15/maxEmp)*100}%"></div><div class="an-fill an-fill-20" style="width:${(v.ot20/maxEmp)*100}%"></div></div></td>
             </tr>`;
-          }).join('')||'<tr><td colspan="5" class="td-muted" style="text-align:center;padding:1.5rem">No data</td></tr>'}</tbody>
+          }).join('')||'<tr><td colspan="7" class="td-muted" style="text-align:center;padding:1.5rem">No OT clocked in this period</td></tr>'}</tbody>
         </table>
       </div>
     </div>
@@ -1283,7 +1280,7 @@ function adminTab(tab, btn) {
           <ul class="master-items" id="ml-customers">${masterList('customers')}</ul>
           <div class="add-item-bar"><input type="text" id="mi-customers" placeholder="Add customer…"><button class="btn btn-primary btn-sm" onclick="addMI('customers','mi-customers','ml-customers')">Add</button></div>
         </div></div>
-        <div class="card"><div class="card-head"><h3>Equipment Names</h3></div><div class="card-body">
+        <div class="card"><div class="card-head"><h3>Equipment (EQ)</h3></div><div class="card-body">
           <ul class="master-items" id="ml-equipment">${masterList('equipment')}</ul>
           <div class="add-item-bar"><input type="text" id="mi-equipment" placeholder="Add equipment…"><button class="btn btn-primary btn-sm" onclick="addMI('equipment','mi-equipment','ml-equipment')">Add</button></div>
         </div></div>
