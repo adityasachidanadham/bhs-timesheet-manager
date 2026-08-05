@@ -1301,6 +1301,7 @@ img { max-width: 100%; }
 td.tsx-act-cell { width: 100%; }
 .tsx-sm     { width: 48px; text-align: center; }
 .tsx-tp     { width: 64px; }
+.tsx-ctry   { width: 92px; }
 .tsx-rem    { width: 104px; resize: vertical; min-height: 32px; line-height: 1.3; }
 .tsx-meal   { width: 46px; text-align: center; }
 .tsx-ot     { display: inline-flex; align-items: center; justify-content: center; min-width: 42px; padding: 0.26rem 0.3rem; border-radius: var(--r-sm); font-size: 0.74rem; font-weight: 700; font-variant-numeric: tabular-nums; }

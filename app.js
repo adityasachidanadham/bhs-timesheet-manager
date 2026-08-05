@@ -74,7 +74,7 @@ const Store = {
     { id:71, empId:'907', name:'Saranraj Ravi Sankar', username:'907', password:'tech123', role:'tech', team:'ASML', managerId:null, active:true },
   ],
   teams: ['AMHS','ATTACHMENT','ASML'],
-  countries:  ['Singapore','US','Netherlands','India','Ireland','China','Japan','Taiwan','Korea','Belgium'],
+  countries:  ['Singapore','USA','Netherlands','China','Japan','Ireland','Taiwan','Korea','Israel'],
   customers:  ['HQ','Micron','GF','Muratec','UMC'],
   equipment:  ['SRC','G Series','Stocker','EUV','Cannon','Photo','Metrology'],
   standbyTypes: ['Standby','Annual Leave','Medical','Off in Lieu','Carry Forward Leave','Birthday Leave','Unpaid Leave'],
@@ -96,48 +96,7 @@ const Store = {
     { date:'2026-11-09', name:'Deepavali (Observed)',      country:'Singapore' },
     { date:'2026-12-25', name:'Christmas Day',             country:'Singapore' },
   ],
-  timesheets: [
-    {
-      id:101, userId:10, year:2026, month:5, status:'approved',
-      submittedAt:'2026-05-20', approvedAt:'2026-05-21', approvedBy:3, rejectionComment:'',
-      entries:[
-        { id:1,  date:'2026-05-04', customer:'HQ',    workHrs:8, sbHrs:0, sbType:'Standby', description:'EUV machine calibration',        country:'Netherlands', equipment:'EUV',      allowances:['Meal Allowance', 'Project Allowance'], ot15:0, ot20:0 },
-        { id:2,  date:'2026-05-05', customer:'Micron',  workHrs:10,sbHrs:0, sbType:'Standby', description:'Stocker system maintenance',       country:'Taiwan',      equipment:'Stocker',  allowances:['Transport Allowance', 'Shift Allowance'], ot15:2, ot20:0 },
-        { id:3,  date:'2026-05-06', customer:'GF', workHrs:8, sbHrs:0, sbType:'Standby', description:'SRC installation phase 1',          country:'Japan',       equipment:'SRC',      allowances:[], ot15:0, ot20:0 },
-        { id:4,  date:'2026-05-07', customer:'HQ',    workHrs:6, sbHrs:2, sbType:'Standby', description:'On-call support',                   country:'Netherlands', equipment:'EUV',      allowances:[], ot15:0, ot20:0 },
-        { id:5,  date:'2026-05-09', customer:'Muratec', workHrs:4, sbHrs:0, sbType:'Standby', description:'Saturday on-call check',            country:'Singapore',   equipment:'G Series', allowances:['Meal Allowance', 'Transport Allowance', 'Project Allowance'], ot15:0, ot20:0 },
-        { id:6,  date:'2026-05-11', customer:'Micron',  workHrs:8, sbHrs:0, sbType:'Standby', description:'Photo track maintenance',           country:'Singapore',   equipment:'Photo',    allowances:['Transport Allowance', 'Project Allowance'], ot15:0, ot20:0 },
-        { id:7,  date:'2026-05-12', customer:'UMC',     workHrs:6, sbHrs:0, sbType:'Standby', description:'Metrology alignment check',         country:'Taiwan',      equipment:'Metrology',allowances:['Shift Allowance'], ot15:0, ot20:6 },
-      ]
-    },
-    {
-      id:102, userId:11, year:2026, month:5, status:'submitted',
-      submittedAt:'2026-05-24', approvedAt:null, approvedBy:null, rejectionComment:'',
-      entries:[
-        { id:8,  date:'2026-05-04', customer:'GF', workHrs:8, sbHrs:0, sbType:'Standby', description:'Conveyor installation support',     country:'Japan',       equipment:'SRC',      allowances:['Project Allowance'], ot15:0, ot20:0 },
-        { id:9,  date:'2026-05-05', customer:'Muratec', workHrs:11,sbHrs:0, sbType:'Standby', description:'G Series config & testing',          country:'Singapore',   equipment:'G Series', allowances:['Meal Allowance', 'Transport Allowance', 'Shift Allowance'], ot15:3, ot20:0 },
-        { id:10, date:'2026-05-06', customer:'HQ',    workHrs:4, sbHrs:4, sbType:'Annual Leave', description:'Half-day leave, half-day EUV', country:'Netherlands', equipment:'EUV',      allowances:[], ot15:0, ot20:0 },
-        { id:11, date:'2026-05-07', customer:'Micron',  workHrs:8, sbHrs:0, sbType:'Standby', description:'Stocker PM routine',                 country:'Taiwan',      equipment:'Stocker',  allowances:['Transport Allowance', 'Project Allowance'], ot15:0, ot20:0 },
-      ]
-    },
-    {
-      id:103, userId:19, year:2026, month:5, status:'rejected',
-      submittedAt:'2026-05-23', approvedAt:null, approvedBy:4,
-      rejectionComment:'Please add more detail in the description for May 7 entry.',
-      entries:[
-        { id:12, date:'2026-05-04', customer:'UMC',     workHrs:8, sbHrs:0, sbType:'Standby', description:'Metrology system baseline check',   country:'Korea',       equipment:'Metrology',allowances:[], ot15:0, ot20:0 },
-        { id:13, date:'2026-05-07', customer:'UMC',     workHrs:12,sbHrs:0, sbType:'Standby', description:'Emergency fix',                      country:'Korea',       equipment:'Metrology',allowances:['Meal Allowance', 'Transport Allowance', 'Shift Allowance', 'Project Allowance'], ot15:4, ot20:0 },
-      ]
-    },
-    {
-      id:104, userId:24, year:2026, month:5, status:'draft',
-      submittedAt:null, approvedAt:null, approvedBy:null, rejectionComment:'',
-      entries:[
-        { id:14, date:'2026-05-04', customer:'GF', workHrs:8, sbHrs:0, sbType:'Standby', description:'SRC commissioning day 1',            country:'China',       equipment:'SRC',      allowances:['Transport Allowance', 'Project Allowance'], ot15:0, ot20:0 },
-        { id:15, date:'2026-05-05', customer:'GF', workHrs:4, sbHrs:4, sbType:'Medical', description:'Morning sick leave, afternoon work',  country:'China',       equipment:'SRC',      allowances:[], ot15:0, ot20:0 },
-      ]
-    }
-  ],
+  timesheets: [],
   nextId: { user:72, ts:200, entry:1000 }
 };
 
@@ -162,6 +121,11 @@ const isHol  = d => Store.publicHolidays.some(h => h.date === d);
 const holNm  = d => Store.publicHolidays.find(h => h.date === d)?.name || '';
 const userBy = id => Store.users.find(u => u.id === id);
 const isLeave= type => Store.leaveTypes.includes(type);
+
+// Country dropdown for timesheet rows
+function countryOptions(sel) {
+  return `<option value="">–</option>` + Store.countries.map(c=>`<option value="${c}" ${sel===c?'selected':''}>${c}</option>`).join('');
+}
 
 // Numeric hours dropdown (0–16 in 0.5 steps)
 const HOUR_OPTS = Array.from({length:33},(_,i)=>i/2);
@@ -479,8 +443,8 @@ function reloadTs() {
 }
 
 
-// Roles that use the day-grid "My Timesheet" layout (tech + manager)
-function usesDayGrid() { return me.role==='tech' || me.role==='manager'; }
+// All roles use the day-grid "My Timesheet" layout
+function usesDayGrid() { return true; }
 
 // Guarantee one row per calendar day of the selected month
 function ensureTechMonth() {
@@ -688,8 +652,7 @@ function buildRow(e, ts, editable) {
         <select class="ts-input tsx-hrs" onchange="upd(${ts.id},${e.id},'sbHrs',parseFloat(this.value)||0)">${hourOptions(e.sbHrs)}</select>
       </td>
       <td>
-        <input class="ts-input tsx-tp" type="text" value="${e.country||''}"
-          onchange="upd(${ts.id},${e.id},'country',this.value)">
+        <select class="ts-input tsx-ctry" onchange="upd(${ts.id},${e.id},'country',this.value)">${countryOptions(e.country)}</select>
       </td>
       <td>
         <input class="ts-input tsx-tp" type="text" value="${e.customer||''}"
@@ -1109,20 +1072,16 @@ function buildAplTable(month, year) {
   if (!team.length) return '<div class="empty"><div class="empty-ico">👥</div><p>No team members found</p></div>';
   const groups = Store.teams.map(g => ({ name:g, members:team.filter(u=>u.team===g) })).filter(g=>g.members.length);
   return `<table class="apple-table">
-    <thead><tr><th>Employee</th><th>Submitted</th><th>Status</th><th>OT 1.5×</th><th>OT 2.0×</th><th></th></tr></thead>
+    <thead><tr><th>Employee</th><th>Status</th><th>OT 1.5×</th><th>OT 2.0×</th><th></th></tr></thead>
     <tbody>${groups.map(g=>`
-      <tr class="apl-team-row"><td colspan="6">${g.name} <span class="td-muted" style="font-weight:500">(${g.members.length})</span></td></tr>
+      <tr class="apl-team-row"><td colspan="5">${g.name} <span class="td-muted" style="font-weight:500">(${g.members.length})</span></td></tr>
       ${g.members.map(u=>{
         const ts = getTsFor(u.id, year, month);
         if (ts) recalcTs(ts);
-        const submitted = ts && (ts.status==='submitted' || ts.status==='approved');
         const o15 = ts ? ts.entries.reduce((s,e)=>s+(e.ot15||0),0) : 0;
         const o20 = ts ? ts.entries.reduce((s,e)=>s+(e.ot20||0),0) : 0;
         return `<tr>
           <td><strong>${u.name}</strong><br><small class="td-muted" style="font-size:0.72rem">${u.empId}</small></td>
-          <td>${submitted
-            ? '<span style="color:var(--green-text);font-weight:700">Y</span>'
-            : '<span class="td-muted" style="font-weight:700">N</span>'}</td>
           <td>${ts
             ? `<span class="pill pill-${ts.status}"><span class="pill-dot dot-${ts.status}"></span>${ts.status}</span>`
             : `<span class="pill pill-draft"><span class="pill-dot dot-draft"></span>not started</span>`}</td>
@@ -1151,7 +1110,7 @@ function reviewRowHtml(e) {
     <td class="ts-day-cell"><strong>${fmtD(e.date)}</strong><span class="ts-day-name">${dayShort}</span></td>
     <td><select class="ts-input tsx-hrs" data-e="${e.id}" data-f="workHrs">${reviewHourOptions(e.workHrs)}</select></td>
     <td><select class="ts-input tsx-hrs" data-e="${e.id}" data-f="sbHrs">${reviewHourOptions(e.sbHrs)}</select></td>
-    <td>${inp('country','tsx-tp',e.country)}</td>
+    <td><select class="ts-input tsx-ctry" data-e="${e.id}" data-f="country">${countryOptions(e.country)}</select></td>
     <td>${inp('customer','tsx-tp',e.customer)}</td>
     <td>${inp('equipment','tsx-tp',e.equipment)}</td>
     <td class="tsx-act-cell"><textarea class="ts-input tsx-act" rows="1" data-e="${e.id}" data-f="description">${e.description||''}</textarea></td>
