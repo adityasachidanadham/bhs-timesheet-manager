@@ -184,19 +184,29 @@ function bootApp() {
   roleTag.textContent = me.role.charAt(0).toUpperCase()+me.role.slice(1);
   roleTag.className = `nav-role-tag ${me.role}`;
   buildNav();
-  goTo(me.role==='tech' ? 'timesheet' : 'dashboard');
+  goTo(me.role==='tech' ? 'timesheet' : me.role==='manager' ? 'approvals' : 'dashboard');
 }
 
 function buildNav() {
-  const tabs = [
-    { id:'dashboard', label:'Dashboard',   roles:['admin','manager'] },
-    { id:'timesheet', label:'My Timesheet',roles:['admin','manager','tech'] },
-    { id:'approvals', label:'Approvals',   roles:['admin','manager'] },
-    { id:'analytics', label:'Analytics',   roles:['admin','manager'] },
-    { id:'admin',     label:'Admin Panel', roles:['admin'] },
-  ];
+  let tabs;
+  if (me.role==='manager') {
+    tabs = [
+      { id:'approvals', label:'Approvals' },
+      { id:'analytics', label:'Analytics' },
+      { id:'timesheet', label:'My Timesheet' },
+    ];
+  } else if (me.role==='admin') {
+    tabs = [
+      { id:'dashboard', label:'Dashboard' },
+      { id:'timesheet', label:'My Timesheet' },
+      { id:'approvals', label:'Approvals' },
+      { id:'analytics', label:'Analytics' },
+      { id:'admin',     label:'Admin Panel' },
+    ];
+  } else {
+    tabs = [ { id:'timesheet', label:'My Timesheet' } ];
+  }
   $('nav-tabs').innerHTML = tabs
-    .filter(t => t.roles.includes(me.role))
     .map(t => `<button class="nav-tab" data-p="${t.id}" onclick="goTo('${t.id}')">${t.label}</button>`)
     .join('');
 }
@@ -1003,233 +1013,233 @@ function doSubmitTs(tsId) {
 function renderApprovals(el) {
   el.innerHTML = `
     <div class="sec-header">
-      <div class="sec-title"><h1>Approvals</h1><p>Review and action team timesheet submissions</p></div>
+      <div class="sec-title"><h1>Approvals</h1><p>Your team's timesheets for the selected period</p></div>
     </div>
-    <div class="filter-row">
-      <input class="f-input" id="fl-search" placeholder="🔍  Search employee…" oninput="filterApl()">
-      <select class="f-select" id="fl-status" onchange="filterApl()">
-        <option value="">All Statuses</option>
-        <option value="submitted">Submitted</option>
-        <option value="approved">Approved</option>
-        <option value="rejected">Rejected</option>
-        <option value="draft">Draft</option>
-      </select>
-      <select class="f-select" id="fl-month" onchange="filterApl()">
-        <option value="">All Months</option>
-        ${MONTHS.map((m,i)=>`<option value="${i+1}">${m}</option>`).join('')}
-      </select>
-      <select class="f-select" id="fl-country" onchange="filterApl()">
-        <option value="">All Countries</option>
-        ${Store.countries.map(c=>`<option value="${c}">${c}</option>`).join('')}
-      </select>
-    </div>
-    <div class="card"><div class="table-scroll" id="apl-wrap">${buildAplTable()}</div></div>
-
-    <!-- Timesheet Detail Modal -->
-    <div class="overlay" id="ts-modal">
-      <div class="modal modal-lg">
-        <div class="modal-head"><h3 id="ts-modal-title">Timesheet Review</h3><button class="modal-x" onclick="closeOverlay('ts-modal')">✕</button></div>
-        <div class="modal-body" id="ts-modal-body"></div>
-        <div class="modal-foot" id="ts-modal-foot"></div>
+    <div class="ts-toolbar">
+      <div class="ts-period-selector">
+        <label>Month</label>
+        <select id="apl-m" onchange="reloadApl()">
+          ${MONTHS.map((m,i)=>`<option value="${i+1}" ${i+1===tsMonth?'selected':''}>${m}</option>`).join('')}
+        </select>
+        <div class="ts-sep"></div>
+        <label>Year</label>
+        <select id="apl-y" onchange="reloadApl()">
+          ${[2024,2025,2026,2027].map(y=>`<option value="${y}" ${y===tsYear?'selected':''}>${y}</option>`).join('')}
+        </select>
       </div>
     </div>
-
-    <!-- Reject Modal -->
-    <div class="overlay" id="rej-modal">
-      <div class="modal">
-        <div class="modal-head"><h3>Reject Timesheet</h3><button class="modal-x" onclick="closeOverlay('rej-modal')">✕</button></div>
-        <div class="modal-body">
-          <div class="f-group">
-            <label>Reason for Rejection <span style="color:var(--red)">*</span></label>
-            <textarea id="rej-comment" placeholder="Explain what needs to be corrected…" rows="4"></textarea>
-          </div>
-        </div>
-        <div class="modal-foot">
-          <button class="btn btn-ghost" onclick="closeOverlay('rej-modal')">Cancel</button>
-          <button class="btn btn-danger" onclick="confirmReject()">Confirm Rejection</button>
-        </div>
-      </div>
-    </div>
+    <div class="card"><div class="table-scroll" id="apl-wrap"></div></div>
   `;
+  reloadApl();
 }
 
-function getAplTs() {
-  let all = Store.timesheets;
-  if (me.role==='manager') {
-    const team = Store.users.filter(u=>u.managerId===me.id).map(u=>u.id);
-    all = all.filter(t=>team.includes(t.userId));
-  }
-  return all;
+function teamUsers() {
+  if (me.role==='manager') return Store.users.filter(u=>u.managerId===me.id && u.active);
+  return Store.users.filter(u=>u.role!=='admin' && u.active); // admin sees everyone
 }
 
-function buildAplTable(search='',status='',month='',country='') {
-  let list = getAplTs();
-  if (search) list=list.filter(t=>userBy(t.userId)?.name.toLowerCase().includes(search.toLowerCase()));
-  if (status) list=list.filter(t=>t.status===status);
-  if (month)  list=list.filter(t=>t.month===parseInt(month));
-  if (country) list=list.filter(t=>t.entries.some(e=>e.country===country));
-  if (!list.length) return '<div class="empty"><div class="empty-ico">📭</div><p>No timesheets found</p></div>';
+function reloadApl() {
+  const m = parseInt($('apl-m')?.value)||tsMonth;
+  const y = parseInt($('apl-y')?.value)||tsYear;
+  $('apl-wrap').innerHTML = buildAplTable(m, y);
+}
+
+function buildAplTable(month, year) {
+  const team = teamUsers();
+  if (!team.length) return '<div class="empty"><div class="empty-ico">👥</div><p>No team members found</p></div>';
   return `<table class="apple-table">
     <thead><tr><th>Employee</th><th>Period</th><th>Submitted</th><th>Status</th><th>OT 1.5×</th><th>OT 2.0×</th><th></th></tr></thead>
-    <tbody>${list.map(ts=>{
-      const u=userBy(ts.userId);
-      const o15=ts.entries.reduce((s,e)=>s+(e.ot15||0),0);
-      const o20=ts.entries.reduce((s,e)=>s+(e.ot20||0),0);
+    <tbody>${team.map(u=>{
+      const ts = getTsFor(u.id, year, month);
+      if (ts) recalcTs(ts);
+      const o15 = ts ? ts.entries.reduce((s,e)=>s+(e.ot15||0),0) : 0;
+      const o20 = ts ? ts.entries.reduce((s,e)=>s+(e.ot20||0),0) : 0;
       return `<tr>
-        <td><strong>${u?.name}</strong><br><small class="td-muted" style="font-size:0.75rem">${u?.role}</small></td>
-        <td class="td-muted">${MONTHS[ts.month-1]} ${ts.year}</td>
-        <td class="td-muted">${fmtD(ts.submittedAt)}</td>
-        <td><span class="pill pill-${ts.status}"><span class="pill-dot dot-${ts.status}"></span>${ts.status}</span></td>
+        <td><strong>${u.name}</strong></td>
+        <td class="td-muted">${MONTHS[month-1]} ${year}</td>
+        <td class="td-muted">${ts ? fmtD(ts.submittedAt) : '–'}</td>
+        <td>${ts
+          ? `<span class="pill pill-${ts.status}"><span class="pill-dot dot-${ts.status}"></span>${ts.status}</span>`
+          : `<span class="pill pill-draft"><span class="pill-dot dot-draft"></span>not started</span>`}</td>
         <td><span class="ot-tag ot-tag-15">${fmt(o15)}h</span></td>
         <td><span class="ot-tag ot-tag-20">${fmt(o20)}h</span></td>
-        <td><button class="btn btn-sm btn-ghost" onclick="openTsDetail(${ts.id})">Review →</button></td>
+        <td>${ts ? `<button class="btn btn-sm btn-ghost" onclick="openReviewTab(${ts.id})">Review →</button>` : ''}</td>
       </tr>`;
     }).join('')}</tbody>
   </table>`;
 }
 
-function filterApl() {
-  $('apl-wrap').innerHTML = buildAplTable(
-    $('fl-search')?.value||'',
-    $('fl-status')?.value||'',
-    $('fl-month')?.value||'',
-    $('fl-country')?.value||''
-  );
+// ── Review in a new browser tab (multitask-friendly) ─────────
+function reviewHourOptions(sel) {
+  return HOUR_OPTS.map(h=>`<option value="${h}" ${(sel||0)===h?'selected':''}>${h===0?'0':fmt(h)}</option>`).join('');
 }
 
-function openTsDetail(tsId) {
-  viewingTs = tsId;
+function reviewRowHtml(e) {
+  const sunday = e.date && dow(e.date)===0;
+  const hol = isHol(e.date);
+  const cls = [hol?'row-holiday':'', sunday?'row-sunday':''].filter(Boolean).join(' ');
+  const dayShort = e.date ? DAYS[dow(e.date)] : '';
+  ['tpFrom','tpTo','tpPre','shiftAllowance','remarks'].forEach(k=>{ if(e[k]===undefined) e[k]=''; });
+  ['nightHrs','nightOtHrs','mealLunch','mealDinner'].forEach(k=>{ if(e[k]===undefined) e[k]=0; });
+  const inp = (f, extra, val) => `<input class="ts-input ${extra}" type="text" data-e="${e.id}" data-f="${f}" value="${val||''}">`;
+  return `<tr class="${cls}">
+    <td class="ts-day-cell"><strong>${fmtD(e.date)}</strong><span class="ts-day-name">${dayShort}</span></td>
+    <td><select class="ts-input tsx-hrs" data-e="${e.id}" data-f="workHrs">${reviewHourOptions(e.workHrs)}</select></td>
+    <td><select class="ts-input tsx-hrs" data-e="${e.id}" data-f="sbHrs">${reviewHourOptions(e.sbHrs)}</select></td>
+    <td>${inp('country','tsx-tp',e.country)}</td>
+    <td>${inp('customer','tsx-tp',e.customer)}</td>
+    <td>${inp('equipment','tsx-tp',e.equipment)}</td>
+    <td class="tsx-act-cell"><textarea class="ts-input tsx-act" rows="1" data-e="${e.id}" data-f="description">${e.description||''}</textarea></td>
+    <td><input class="ts-input tsx-sm" type="number" min="0" max="24" step="0.5" data-e="${e.id}" data-f="nightHrs" value="${e.nightHrs||0}"></td>
+    <td><input class="ts-input tsx-sm" type="number" min="0" max="24" step="0.5" data-e="${e.id}" data-f="nightOtHrs" value="${e.nightOtHrs||0}"></td>
+    <td><div class="tsx-ot ot-tag-15" id="rv-ot15-${e.id}">${e.ot15>0?fmt(e.ot15)+'h':'–'}</div></td>
+    <td><div class="tsx-ot ot-tag-20" id="rv-ot20-${e.id}">${e.ot20>0?fmt(e.ot20)+'h':'–'}</div></td>
+    <td><select class="ts-input tsx-meal" data-e="${e.id}" data-f="mealLunch"><option value="0" ${!e.mealLunch?'selected':''}>–</option><option value="1" ${e.mealLunch===1?'selected':''}>1</option></select></td>
+    <td><select class="ts-input tsx-meal" data-e="${e.id}" data-f="mealDinner"><option value="0" ${!e.mealDinner?'selected':''}>–</option><option value="1" ${e.mealDinner===1?'selected':''}>1</option></select></td>
+    <td>${inp('tpFrom','tsx-tp',e.tpFrom)}</td>
+    <td>${inp('tpTo','tsx-tp',e.tpTo)}</td>
+    <td>${inp('tpPre','tsx-tp',e.tpPre)}</td>
+    <td>${inp('shiftAllowance','tsx-tp',e.shiftAllowance)}</td>
+    <td><textarea class="ts-input tsx-rem" rows="1" data-e="${e.id}" data-f="remarks">${e.remarks||''}</textarea></td>
+  </tr>`;
+}
+
+function reviewTotals(ts) {
+  return {
+    dep: ts.entries.reduce((s,e)=>s+(e.workHrs||0),0),
+    sb:  ts.entries.reduce((s,e)=>s+(e.sbHrs||0),0),
+    o15: ts.entries.reduce((s,e)=>s+(e.ot15||0),0),
+    o20: ts.entries.reduce((s,e)=>s+(e.ot20||0),0),
+  };
+}
+
+function openReviewTab(tsId) {
   const ts = Store.timesheets.find(t=>t.id===tsId);
   if (!ts) return;
-  const u=userBy(ts.userId);
-  const o15=ts.entries.reduce((s,e)=>s+(e.ot15||0),0);
-  const o20=ts.entries.reduce((s,e)=>s+(e.ot20||0),0);
-  const totalW=ts.entries.reduce((s,e)=>s+(e.workHrs||0),0);
-  const totalS=ts.entries.reduce((s,e)=>s+(e.sbHrs||0),0);
-  const canApprove=(me.role==='admin'||me.role==='manager')&&ts.status==='submitted';
-  const canOverride=me.role==='admin'||me.role==='manager';
-
-  $('ts-modal-title').textContent = `${u?.name} · ${MONTHS[ts.month-1]} ${ts.year}`;
-  $('ts-modal-body').innerHTML = `
-    <div class="ts-meta-row">
-      <div class="ts-meta-item"><div class="ts-meta-val">${u?.name}</div><div class="ts-meta-lbl">Employee</div></div>
-      <div class="ts-meta-item"><div class="ts-meta-val">${MONTHS[ts.month-1]} ${ts.year}</div><div class="ts-meta-lbl">Period</div></div>
-      <div class="ts-meta-item"><div class="ts-meta-val">${fmt(totalW)}h</div><div class="ts-meta-lbl">Working Hrs</div></div>
-      <div class="ts-meta-item"><div class="ts-meta-val">${fmt(totalS)}h</div><div class="ts-meta-lbl">Standby/Leave</div></div>
-      <div class="ts-meta-item"><div class="ts-meta-val" style="color:var(--ot15)">${fmt(o15)}h</div><div class="ts-meta-lbl">OT 1.5×</div></div>
-      <div class="ts-meta-item"><div class="ts-meta-val" style="color:var(--ot20)">${fmt(o20)}h</div><div class="ts-meta-lbl">OT 2.0×</div></div>
-      <div class="ts-meta-item"><span class="pill pill-${ts.status}"><span class="pill-dot dot-${ts.status}"></span>${ts.status}</span><div class="ts-meta-lbl" style="margin-top:0.4rem">Status</div></div>
-    </div>
-    ${ts.rejectionComment?`<div style="padding:0.85rem 1rem;background:var(--red-bg);border:1px solid rgba(239,68,68,0.2);border-radius:var(--r-md);color:var(--red-text);font-size:0.85rem;margin-bottom:1rem"><strong>Previous rejection:</strong> ${ts.rejectionComment}</div>`:''}
-    <div class="table-scroll">
-      <table class="apple-table">
-        <thead><tr>
-          <th>Date</th><th>Work Location</th><th>Working</th><th>Standby/Leave</th><th>Description</th><th>Country</th><th>Equipment</th><th>Allowances</th><th>OT 1.5×</th><th>OT 2.0×</th>
-          ${canOverride?'<th>Override</th>':''}
-        </tr></thead>
-        <tbody>
-          ${ts.entries.map(e=>{
-            const h=isHol(e.date);
-            return `<tr class="${h?'row-holiday':''}">
-              <td><strong>${fmtD(e.date)}</strong><br><small class="td-muted" style="font-size:0.73rem">${DAYS[dow(e.date)]}${h?` · 🔴 ${holNm(e.date)}`:''}</small></td>
-              <td>${e.customer||'–'}</td>
-              <td class="td-mono"><strong>${e.workHrs||0}h</strong></td>
-              <td class="td-muted">${e.sbHrs||0}h <small>(${e.sbType||'Standby'})</small></td>
-              <td>${e.description||'–'}</td>
-              <td>${e.country||'–'}</td>
-              <td>${e.equipment||'–'}</td>
-              <td class="allow-cell">${allowanceBadges(e.allowances)}</td>
-              <td>${e.ot15>0?`<span class="ot-tag ot-tag-15">${fmt(e.ot15)}h</span>`:'<span class="ot-tag-none">–</span>'}</td>
-              <td>${e.ot20>0?`<span class="ot-tag ot-tag-20">${fmt(e.ot20)}h</span>`:'<span class="ot-tag-none">–</span>'}</td>
-              ${canOverride?`<td><button class="btn btn-sm btn-ghost" onclick="showOverride(${ts.id},${e.id})" style="font-size:0.75rem">✏️ Edit</button></td>`:''}
-            </tr>`;
-          }).join('')}
-        </tbody>
-      </table>
-    </div>
-    <div id="override-panel"></div>
-  `;
-
-  const foot = $('ts-modal-foot');
-  foot.innerHTML = '';
-  if (canApprove) {
-    const rb=document.createElement('button'); rb.className='btn btn-danger'; rb.textContent='❌ Reject';
-    rb.onclick=()=>{ closeOverlay('ts-modal'); $('rej-comment').value=''; openOverlay('rej-modal'); };
-    const ab=document.createElement('button'); ab.className='btn btn-success'; ab.textContent='✅ Approve';
-    ab.onclick=()=>approveTs(ts.id);
-    foot.appendChild(rb); foot.appendChild(ab);
-  } else {
-    const cb=document.createElement('button'); cb.className='btn btn-secondary'; cb.textContent='Close';
-    cb.onclick=()=>closeOverlay('ts-modal');
-    foot.appendChild(cb);
+  // Fill any missing days so the review mirrors the tech's full-month grid (any month, any year)
+  const daysInMonth = new Date(ts.year, ts.month, 0).getDate();
+  for (let d=1; d<=daysInMonth; d++) {
+    const dateStr = `${ts.year}-${String(ts.month).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    if (!ts.entries.some(e => e.date === dateStr)) {
+      ts.entries.push({ id:Store.nextId.entry++, date:dateStr, customer:'', workHrs:0, sbHrs:0, sbType:'Standby', description:'', country:'', equipment:'', allowances:[], ot15:0, ot20:0, nightHrs:0, nightOtHrs:0, mealLunch:0, mealDinner:0, tpFrom:'', tpTo:'', tpPre:'', shiftAllowance:'', remarks:'' });
+    }
   }
+  ts.entries.sort((a,b) => (a.date||'').localeCompare(b.date||''));
+  recalcTs(ts);
 
-  if (page!=='approvals') goTo('approvals');
-  setTimeout(()=>openOverlay('ts-modal'),30);
-}
-
-function approveTs(tsId) {
-  const ts=Store.timesheets.find(t=>t.id===tsId);
-  if (!ts) return;
-  ts.status='approved'; ts.approvedAt=new Date().toISOString().slice(0,10); ts.approvedBy=me.id;
-  toast('Timesheet approved ✅','success');
-  closeOverlay('ts-modal');
-  filterApl();
-}
-
-function confirmReject() {
-  const comment=$('rej-comment')?.value.trim();
-  if (!comment) { toast('Please enter a rejection reason.','error'); return; }
-  const ts=Store.timesheets.find(t=>t.id===viewingTs);
-  if (!ts) return;
-  ts.status='rejected'; ts.rejectionComment=comment; ts.approvedBy=me.id;
-  toast('Timesheet rejected with comments.','info');
-  closeOverlay('rej-modal');
-  filterApl();
-}
-
-function showOverride(tsId, entryId) {
-  overrideTsId=tsId; overrideEntryId=entryId;
-  const ts=Store.timesheets.find(t=>t.id===tsId);
-  const e=ts?.entries.find(x=>x.id===entryId);
-  if (!e) return;
-  const panel=$('override-panel');
-  panel.innerHTML = `
-    <div style="margin-top:1.1rem;padding:1.1rem;background:var(--bg);border:1.5px solid rgba(37,99,235,0.2);border-radius:var(--r-md)">
-      <h4 style="font-size:0.9rem;font-weight:700;margin-bottom:0.9rem;color:var(--text-primary)">✏️ Override — ${fmtD(e.date)}</h4>
-      <div class="f-grid-3">
-        <div class="f-group"><label>Working Hrs</label><input type="number" id="ov-w" value="${e.workHrs}" min="0" max="24" step="0.5"></div>
-        <div class="f-group"><label>Standby Hrs</label><input type="number" id="ov-s" value="${e.sbHrs}" min="0" max="24" step="0.5"></div>
-        <div class="f-group"><label>Standby Type</label>
-          <select id="ov-st">${Store.standbyTypes.map(t=>`<option value="${t}" ${e.sbType===t?'selected':''}>${t}</option>`).join('')}</select>
+  const u = userBy(ts.userId);
+  const t = reviewTotals(ts);
+  const win = window.open('', '_blank');
+  if (!win) { toast('Please allow pop-ups to open the review tab.','error'); return; }
+  const doc = win.document;
+  doc.open();
+  doc.write(`<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <base href="${document.baseURI}">
+    <title>Review — ${u?.name} · ${MONTHS[ts.month-1]} ${ts.year}</title>
+    <link rel="stylesheet" href="styles.css?v=13">
+    </head><body style="background:var(--bg)">
+    <div class="page-wrap">
+      <div class="sec-header">
+        <div class="sec-title"><h1>${u?.name}</h1><p>${MONTHS[ts.month-1]} ${ts.year} · Timesheet Review</p></div>
+        <div class="sec-actions">
+          <button class="btn btn-danger" id="rv-reject">❌ Reject</button>
+          <button class="btn btn-success" id="rv-approve">✅ Approve</button>
         </div>
       </div>
-      <div class="f-grid-2" style="margin-top:0.5rem">
-        <div class="f-group"><label>OT 1.5× Override</label><input type="number" id="ov-15" value="${e.ot15}" min="0" max="24" step="0.5"></div>
-        <div class="f-group"><label>OT 2.0× Override</label><input type="number" id="ov-20" value="${e.ot20}" min="0" max="24" step="0.5"></div>
+      <div class="ts-meta-row">
+        <div class="ts-meta-item"><div class="ts-meta-val">${u?.name}</div><div class="ts-meta-lbl">Employee</div></div>
+        <div class="ts-meta-item"><div class="ts-meta-val">${MONTHS[ts.month-1]} ${ts.year}</div><div class="ts-meta-lbl">Period</div></div>
+        <div class="ts-meta-item"><div class="ts-meta-val" id="rv-t-dep">${fmt(t.dep)}h</div><div class="ts-meta-lbl">Deployed</div></div>
+        <div class="ts-meta-item"><div class="ts-meta-val" id="rv-t-sb">${fmt(t.sb)}h</div><div class="ts-meta-lbl">Standby</div></div>
+        <div class="ts-meta-item"><div class="ts-meta-val" id="rv-t-15" style="color:var(--ot15)">${fmt(t.o15)}h</div><div class="ts-meta-lbl">OT 1.5×</div></div>
+        <div class="ts-meta-item"><div class="ts-meta-val" id="rv-t-20" style="color:var(--ot20)">${fmt(t.o20)}h</div><div class="ts-meta-lbl">OT 2.0×</div></div>
+        <div class="ts-meta-item"><span class="pill pill-${ts.status}" id="rv-status"><span class="pill-dot dot-${ts.status}"></span>${ts.status}</span><div class="ts-meta-lbl" style="margin-top:0.4rem">Status</div></div>
       </div>
-      <div class="f-group"><label>Description</label><input type="text" id="ov-d" value="${e.description}"></div>
-      <div style="display:flex;gap:0.5rem;margin-top:0.5rem">
-        <button class="btn btn-primary btn-sm" onclick="saveOverride()">Save</button>
-        <button class="btn btn-ghost btn-sm" onclick="document.getElementById('override-panel').innerHTML=''">Cancel</button>
+      <div id="rv-reject-box" style="display:none;margin-bottom:1rem">
+        <div class="card" style="padding:1rem">
+          <div class="f-group"><label>Reason for Rejection</label>
+          <textarea id="rv-reject-comment" rows="3" placeholder="Explain what needs to be corrected…"></textarea></div>
+          <div style="display:flex;gap:0.5rem;justify-content:flex-end">
+            <button class="btn btn-ghost" id="rv-reject-cancel">Cancel</button>
+            <button class="btn btn-danger" id="rv-reject-confirm">Confirm Rejection</button>
+          </div>
+        </div>
       </div>
-    </div>
-  `;
-  panel.scrollIntoView({ behavior:'smooth' });
-}
+      <div class="card"><div class="ts-table-wrap">
+        <table class="apple-table ts-table ts-table-tech">
+          <thead>
+          <tr>
+            <th rowspan="2">Date</th>
+            <th rowspan="2">Deployed<br>Hrs</th>
+            <th rowspan="2">Standby<br>Hrs</th>
+            <th rowspan="2">Country</th>
+            <th rowspan="2">Customer</th>
+            <th rowspan="2">EQ</th>
+            <th rowspan="2">Activity</th>
+            <th rowspan="2">Night<br>Shift Hrs</th>
+            <th rowspan="2">Night<br>Shift OT</th>
+            <th rowspan="2">OT<br>1.5×</th>
+            <th rowspan="2">OT<br>2.0×</th>
+            <th rowspan="2">Meal<br>Lunch</th>
+            <th rowspan="2">Meal<br>Dinner</th>
+            <th colspan="3">Transport Claim</th>
+            <th rowspan="2">Shift<br>Allowance</th>
+            <th rowspan="2">Remarks</th>
+          </tr>
+          <tr><th>From</th><th>To</th><th>Preapproved</th></tr>
+          </thead>
+          <tbody>${ts.entries.map(e=>reviewRowHtml(e)).join('')}</tbody>
+        </table>
+      </div></div>
+    </div></body></html>`);
+  doc.close();
 
-function saveOverride() {
-  const ts=Store.timesheets.find(t=>t.id===overrideTsId);
-  const e=ts?.entries.find(x=>x.id===overrideEntryId);
-  if (!e) return;
-  e.workHrs=parseFloat($('ov-w').value)||0;
-  e.sbHrs=parseFloat($('ov-s').value)||0;
-  e.sbType=$('ov-st').value;
-  e.ot15=parseFloat($('ov-15').value)||0;
-  e.ot20=parseFloat($('ov-20').value)||0;
-  e.description=$('ov-d').value||e.description;
-  toast('Entry overridden ✅','success');
-  openTsDetail(overrideTsId);
+  // Bind override handlers from the parent context (manager/admin full override)
+  const numeric = ['workHrs','sbHrs','nightHrs','nightOtHrs','mealLunch','mealDinner'];
+  doc.querySelectorAll('[data-e]').forEach(inp=>{
+    inp.onchange = () => {
+      const e = ts.entries.find(x=>x.id===parseInt(inp.dataset.e));
+      if (!e) return;
+      const f = inp.dataset.f;
+      e[f] = numeric.includes(f) ? (parseFloat(inp.value)||0) : inp.value;
+      recalcTs(ts);
+      // refresh OT cells + header totals in the review tab
+      ts.entries.forEach(x=>{
+        const c15 = doc.getElementById(`rv-ot15-${x.id}`), c20 = doc.getElementById(`rv-ot20-${x.id}`);
+        if (c15) c15.textContent = x.ot15>0?fmt(x.ot15)+'h':'–';
+        if (c20) c20.textContent = x.ot20>0?fmt(x.ot20)+'h':'–';
+      });
+      const tt = reviewTotals(ts);
+      doc.getElementById('rv-t-dep').textContent = fmt(tt.dep)+'h';
+      doc.getElementById('rv-t-sb').textContent  = fmt(tt.sb)+'h';
+      doc.getElementById('rv-t-15').textContent  = fmt(tt.o15)+'h';
+      doc.getElementById('rv-t-20').textContent  = fmt(tt.o20)+'h';
+    };
+  });
+
+  const setStatus = (status) => {
+    const pill = doc.getElementById('rv-status');
+    pill.className = `pill pill-${status}`;
+    pill.innerHTML = `<span class="pill-dot dot-${status}"></span>${status}`;
+    if (page==='approvals') reloadApl();
+  };
+  doc.getElementById('rv-approve').onclick = () => {
+    ts.status='approved'; ts.approvedAt=new Date().toISOString().slice(0,10); ts.approvedBy=me.id;
+    setStatus('approved');
+    win.close();
+    toast(`${u?.name} — timesheet approved ✅`,'success');
+  };
+  doc.getElementById('rv-reject').onclick = () => { doc.getElementById('rv-reject-box').style.display='block'; };
+  doc.getElementById('rv-reject-cancel').onclick = () => { doc.getElementById('rv-reject-box').style.display='none'; };
+  doc.getElementById('rv-reject-confirm').onclick = () => {
+    const comment = doc.getElementById('rv-reject-comment').value.trim();
+    if (!comment) { win.alert('Please enter a rejection reason.'); return; }
+    ts.status='rejected'; ts.rejectionComment=comment; ts.approvedBy=me.id;
+    setStatus('rejected');
+    win.close();
+    toast(`${u?.name} — timesheet rejected.`,'info');
+  };
 }
 
 // ═══════════════════════════════════════════════
