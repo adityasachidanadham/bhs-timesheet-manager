@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=18">
+  <link rel="stylesheet" href="styles.css?v=22">
 </head>
 <body>
 
@@ -20,17 +20,24 @@
   <svg class="login-corner-stripes" viewBox="0 0 168 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
     <g transform="skewX(-20)">
       <rect x="10" y="2" width="48" height="16" fill="#F04019"/>
-      <rect x="64" y="2" width="48" height="16" fill="#14246E"/>
+      <rect x="64" y="2" width="48" height="16" fill="#0B1F6B"/>
       <rect x="118" y="2" width="48" height="16" fill="#1F9CD8"/>
     </g>
   </svg>
 
   <!-- Left branding -->
   <div class="login-left">
-    <div class="login-branding">
+    <div class="login-photo-bg" aria-hidden="true"></div>
+    <div class="login-branding login-glass">
       <div class="login-logo-wrap">
-        <svg class="bhs-logo bhs-logo-login" viewBox="0 0 210 60" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="BHS Kinetic">
-          <text x="2" y="52" font-family="Arial, Helvetica, sans-serif" font-size="64" font-weight="900" font-style="italic" letter-spacing="8" fill="#14246E">BHS</text>
+        <svg class="bhs-logo bhs-logo-login" viewBox="0 0 240 100" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="BHS — A Connected World, Delivered.">
+          <g transform="skewX(-20)">
+            <rect x="22" y="0" width="56" height="14" fill="#F04019"/>
+            <rect x="84" y="0" width="56" height="14" fill="#0B1F6B"/>
+            <rect x="146" y="0" width="56" height="14" fill="#1F9CD8"/>
+          </g>
+          <text x="0" y="70" font-family="'Arial Black', Arial, Helvetica, sans-serif" font-size="56" font-weight="900" font-style="italic" letter-spacing="14" fill="#0B1F6B">BHS</text>
+          <text x="2" y="92" font-family="Arial, Helvetica, sans-serif" font-size="12.5" font-style="italic" font-weight="600" letter-spacing="0.5" fill="#0B1F6B">A Connected World, Delivered.</text>
         </svg>
       </div>
       <h1 class="login-headline">Timesheet<br><span>Management</span></h1>
@@ -65,14 +72,15 @@
 <div id="app">
   <nav class="topnav">
     <div class="nav-logo">
-      <svg class="bhs-logo bhs-logo-nav" viewBox="0 0 210 78" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="BHS Kinetic">
+      <svg class="bhs-logo bhs-logo-nav" viewBox="0 0 240 78" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="BHS">
         <g transform="skewX(-20)">
-          <rect x="6" y="2" width="48" height="16" fill="#F04019"/>
-          <rect x="60" y="2" width="48" height="16" fill="#14246E"/>
-          <rect x="114" y="2" width="48" height="16" fill="#1F9CD8"/>
+          <rect x="24" y="2" width="56" height="14" fill="#F04019"/>
+          <rect x="86" y="2" width="56" height="14" fill="#0B1F6B"/>
+          <rect x="148" y="2" width="56" height="14" fill="#1F9CD8"/>
         </g>
-        <text x="2" y="72" font-family="Arial, Helvetica, sans-serif" font-size="64" font-weight="900" font-style="italic" letter-spacing="8" fill="#14246E">BHS</text>
-        </svg>
+        <text x="2" y="72" font-family="'Arial Black', Arial, Helvetica, sans-serif" font-size="56" font-weight="900" font-style="italic" letter-spacing="14" fill="#0B1F6B">BHS</text>
+      </svg>
+      <span class="nav-buildit">BUILD-IT</span>
     </div>
     <div class="nav-tabs" id="nav-tabs"></div>
     <div class="nav-right">
@@ -92,7 +100,7 @@
 <!-- Toast stack -->
 <div class="toast-stack"></div>
 
-<script src="app.js?v=28"></script>
+<script src="app.js?v=29"></script>
 
 </body>
 </html>

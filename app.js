@@ -9,8 +9,8 @@ const Store = {
     { id:1, empId:'0871', name:'Marlina Binte Ahmad', username:'0871', password:'0871', role:'tech', team:'AMHS', managerIds:[3,4], active:true },
     { id:5, empId:'0000', name:'HR', username:'0000', password:'0000', role:'admin', team:null, managerIds:[], active:true },
     { id:6, empId:'1111', name:'Mike', username:'1111', password:'1111', role:'admin', team:null, managerIds:[], active:true },
-    { id:7, empId:'3333', name:'Admin 3333', username:'3333', password:'3333', role:'admin', team:null, managerIds:[], active:true },
-    { id:2, empId:'1188', name:'Aditya', username:'1188', password:'1188', role:'admin', team:null, managerIds:[], assignable:true, active:true },
+    { id:7, empId:'3333', name:'Admin Assistant', username:'3333', password:'3333', role:'assistant', team:null, managerIds:[], active:true },
+    { id:2, empId:'1188', name:'Sachidanandham Aditya', username:'1188', password:'1188', role:'admin', team:null, managerIds:[], assignable:true, active:true },
     { id:3, empId:'0061', name:'Kevin Lee Kok Meng', username:'0061', password:'0061', role:'manager', team:null, managerIds:[], active:true },
     { id:4, empId:'0044', name:'Lim Khan Yee (Xing)', username:'0044', password:'0044', role:'manager', team:null, managerIds:[], active:true },
     { id:10, empId:'0021', name:'Khoo Gim Soon Adrian', username:'0021', password:'0021', role:'tech', team:'AMHS', managerIds:[3,4], active:true },
@@ -23,7 +23,7 @@ const Store = {
     { id:17, empId:'0003', name:'Alam Shahin', username:'0003', password:'0003', role:'tech', team:'AMHS', managerIds:[3,4], active:true },
     { id:18, empId:'0885', name:'Yan Qingqing', username:'0885', password:'0885', role:'tech', team:'AMHS', managerIds:[3,4], active:true },
     { id:19, empId:'0474', name:'Chan Maw', username:'0474', password:'0474', role:'tech', team:'ATTACHMENT', managerIds:[3,4], active:true },
-    { id:20, empId:'783', name:'Kyi Soe Han', username:'783', password:'783', role:'tech', team:'ATTACHMENT', managerIds:[3,4], active:true },
+    { id:20, empId:'0783', name:'Kyi Soe Han', username:'0783', password:'0783', role:'tech', team:'ATTACHMENT', managerIds:[3,4], active:true },
     { id:21, empId:'1216', name:'Aung Ko Ko', username:'1216', password:'1216', role:'tech', team:'ATTACHMENT', managerIds:[3,4], active:true },
     { id:22, empId:'0640', name:'Nguyen Hoang Minh Cuong', username:'0640', password:'0640', role:'tech', team:'ATTACHMENT', managerIds:[3,4], active:true },
     { id:23, empId:'0641', name:'Nguyen Huu Tam', username:'0641', password:'0641', role:'tech', team:'ATTACHMENT', managerIds:[3,4], active:true },
@@ -65,16 +65,16 @@ const Store = {
     { id:59, empId:'0821', name:'Gangeswaran Manikam', username:'0821', password:'0821', role:'tech', team:'ASML', managerIds:[3,4], active:true },
     { id:60, empId:'0835', name:'Loganathan Naderajan', username:'0835', password:'0835', role:'tech', team:'ASML', managerIds:[3,4], active:true },
     { id:61, empId:'0828', name:'Muhammad Taufiq Bin Leisah', username:'0828', password:'0828', role:'tech', team:'ASML', managerIds:[3,4], active:true },
-    { id:62, empId:'844', name:'Jeft Liang Jia Ching', username:'844', password:'844', role:'tech', team:'ASML', managerIds:[3,4], active:true },
-    { id:63, empId:'848', name:'Sia Jian Fatt', username:'848', password:'848', role:'tech', team:'ASML', managerIds:[3,4], active:true },
-    { id:64, empId:'858', name:'Huai Gin Seng (Jason)', username:'858', password:'858', role:'tech', team:'ASML', managerIds:[3,4], active:true },
-    { id:65, empId:'859', name:'Onn Yi Xun', username:'859', password:'859', role:'tech', team:'ASML', managerIds:[3,4], active:true },
+    { id:62, empId:'0844', name:'Jeft Liang Jia Ching', username:'0844', password:'0844', role:'tech', team:'ASML', managerIds:[3,4], active:true },
+    { id:63, empId:'0848', name:'Sia Jian Fatt', username:'0848', password:'0848', role:'tech', team:'ASML', managerIds:[3,4], active:true },
+    { id:64, empId:'0858', name:'Huai Gin Seng (Jason)', username:'0858', password:'0858', role:'tech', team:'ASML', managerIds:[3,4], active:true },
+    { id:65, empId:'0859', name:'Onn Yi Xun', username:'0859', password:'0859', role:'tech', team:'ASML', managerIds:[3,4], active:true },
     { id:66, empId:'0632', name:'Pham Tien Khanh', username:'0632', password:'0632', role:'tech', team:'ASML', managerIds:[3,4], active:true },
     { id:67, empId:'0634', name:'Ho Nguyen Cuong', username:'0634', password:'0634', role:'tech', team:'ASML', managerIds:[3,4], active:true },
     { id:68, empId:'0870', name:'Prabahar Gunasegaran', username:'0870', password:'0870', role:'tech', team:'ASML', managerIds:[3,4], active:true },
     { id:69, empId:'0878', name:'Lodganath Sandaran', username:'0878', password:'0878', role:'tech', team:'ASML', managerIds:[3,4], active:true },
-    { id:70, empId:'860', name:'Muhammad Hasif Bin Abdul Rahman', username:'860', password:'860', role:'tech', team:'ASML', managerIds:[3,4], active:true },
-    { id:71, empId:'907', name:'Saranraj Ravi Sankar', username:'907', password:'907', role:'tech', team:'ASML', managerIds:[3,4], active:true },
+    { id:70, empId:'0860', name:'Muhammad Hasif Bin Abdul Rahman', username:'0860', password:'0860', role:'tech', team:'ASML', managerIds:[3,4], active:true },
+    { id:71, empId:'0907', name:'Saranraj Ravi Sankar', username:'0907', password:'0907', role:'tech', team:'ASML', managerIds:[3,4], active:true },
   ],
   teams: ['AMHS','ATTACHMENT','ASML'],
   countries:  ['Singapore','USA','Netherlands','China','Japan','Ireland','Taiwan','Korea','Israel'],
@@ -859,7 +859,7 @@ function openPrintTab(tsId) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <base href="${document.baseURI}">
     <title>Timesheet — ${u?.name} · ${MONTHS[ts.month-1]} ${ts.year}</title>
-    <link rel="stylesheet" href="styles.css?v=18">
+    <link rel="stylesheet" href="styles.css?v=22">
     </head><body style="background:#fff">
     <div class="page-wrap">
       <div class="sec-header">
@@ -933,7 +933,7 @@ function openReviewTab(tsId) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <base href="${document.baseURI}">
     <title>Review — ${u?.name} · ${MONTHS[ts.month-1]} ${ts.year}</title>
-    <link rel="stylesheet" href="styles.css?v=18">
+    <link rel="stylesheet" href="styles.css?v=22">
     </head><body style="background:var(--bg)">
     <div class="page-wrap">
       <div class="sec-header">
@@ -1412,7 +1412,90 @@ function holBody(){ return Store.publicHolidays.sort((a,b)=>a.date.localeCompare
 function saveHoliday(){ const d=$('hd').value,n=$('hn').value.trim(),c=$('hc').value; if(!d||!n){ toast('Fill all fields.','error'); return; } Store.publicHolidays.push({date:d,name:n,country:c}); toast('Holiday added ✅','success'); closeOverlay('add-hol-ov'); $('hol-body').innerHTML=holBody(); }
 function delHol(i){ Store.publicHolidays.splice(i,1); $('hol-body').innerHTML=holBody(); toast('Removed.','info'); }
 
+
+// ── Mock data: January–July 2026 for every Level 1 employee ──
+// Deterministic seeded RNG so the demo data is identical on every load.
+function _mulberry32(a) {
+  return function() {
+    a |= 0; a = a + 0x6D2B79F5 | 0;
+    let t = Math.imul(a ^ a >>> 15, 1 | a);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) | 0;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+
+function seedMockData() {
+  if (Store.timesheets.length) return; // never overwrite real entries
+  const ACT = ['Preventive maintenance','Corrective repair','Installation support','System calibration',
+               'Software upgrade','Parts replacement','Site survey','Customer training','Escort duty',
+               'Troubleshooting','Relocation support','Commissioning','Quality inspection','Standby coverage'];
+  const EQS = ['SRC','G Series','Stocker','EUV','Cannon','Photo','Metrology','OHT','Sorter','AGV'];
+  const LOCS= [['Singapore',0.72],['Taiwan',0.08],['Japan',0.06],['Netherlands',0.04],['China',0.04],['USA',0.03],['Korea',0.03]];
+  const CUST= ['Micron','GF','UMC','SSW','TSMC','SOITEC','VSMC','STM','ASML','HQ','Intel','Sony'];
+  const techs = Store.users.filter(u=>u.role==='tech');
+  const mgrs  = Store.users.filter(u=>u.role==='manager').map(m=>m.id);
+
+  techs.forEach((u, ui) => {
+    for (let month=1; month<=7; month++) {
+      const rnd = _mulberry32(u.id*1000 + month*77);
+      const pick = arr => arr[Math.floor(rnd()*arr.length)];
+      const pickLoc = () => { const r=rnd(); let acc=0; for (const [c,w] of LOCS){ acc+=w; if (r<acc) return c; } return 'Singapore'; };
+      // Each employee tends to stick to a customer/equipment per month (realistic deployment)
+      const mainCust = CUST[(u.id + month) % CUST.length];
+      const mainEq   = EQS[(u.id * 3 + month) % EQS.length];
+      const mainLoc  = pickLoc();
+      const isOtHeavy = (u.id % 5) === (month % 5);   // some people clock more OT some months
+
+      const entries = periodDates(2026, month).map(dateStr => {
+        const d = dow(dateStr), hol = isHol(dateStr);
+        let workHrs=0, sbHrs=0, nightHrs=0, nightOtHrs=0, mealL=0, mealD=0, desc='', cust='', eq='', ctry='';
+        const working = hol || d===0 ? rnd() < 0.10           // few Sunday/PH call-outs
+                      : d===6        ? rnd() < 0.45           // some Saturdays
+                      :                rnd() > 0.06;          // rare weekday absence
+        if (working) {
+          if (hol || d===0)      workHrs = pick([4,6,8]);
+          else if (d===6)        workHrs = rnd()<0.3 ? pick([6,8]) : 4;
+          else                   workHrs = (isOtHeavy && rnd()<0.4) ? pick([9,10,10.5,11,12]) : (rnd()<0.12 ? pick([9,10]) : 8);
+          if (workHrs<=8 && !hol && d!==0 && d!==6 && rnd()<0.15) { sbHrs = 8-workHrs ? Math.min(8-workHrs, pick([1,2])) : 0; if (workHrs+sbHrs>8) sbHrs=0; }
+          if (rnd()<0.08) { nightHrs = pick([2,4,8]); if (rnd()<0.4) nightOtHrs = pick([1,2]); }
+          mealL = rnd()<0.75 ? 1 : 0;
+          mealD = workHrs>9 || nightHrs>0 ? (rnd()<0.7?1:0) : (rnd()<0.1?1:0);
+          desc = pick(ACT);
+          cust = rnd()<0.85 ? mainCust : pick(CUST);
+          eq   = rnd()<0.85 ? mainEq   : pick(EQS);
+          ctry = rnd()<0.9  ? mainLoc  : pickLoc();
+        }
+        return { id:Store.nextId.entry++, date:dateStr, customer:cust, workHrs, sbHrs, sbType:'Standby',
+                 description:desc, country:ctry, equipment:eq, allowances:[], ot15:0, ot20:0,
+                 nightHrs, nightOtHrs, mealLunch:mealL, mealDinner:mealD,
+                 tpFrom: working && rnd()<0.25 ? 'Home' : '', tpTo: working && rnd()<0.25 ? 'Fab' : '',
+                 tpPre:'', shiftAllowance: nightHrs>0 ? '30' : '', remarks:'' };
+      });
+
+      // Status: Jan–May approved; Jun approved/submitted; Jul mixed
+      const rnd2 = _mulberry32(u.id*7 + month);
+      let status, submittedAt=null, approvedAt=null, approvedBy=null, rejectionComment='';
+      const subDay = `2026-${String(month===12?1:month+1).padStart(2,'0')}-${String(16+Math.floor(rnd2()*3)).padStart(2,'0')}`;
+      if (month<=5) { status='approved'; submittedAt=subDay; approvedAt=subDay; approvedBy=mgrs[u.id%mgrs.length]; }
+      else if (month===6) {
+        status = rnd2()<0.6 ? 'approved' : 'submitted'; submittedAt=subDay;
+        if (status==='approved') { approvedAt=subDay; approvedBy=mgrs[u.id%mgrs.length]; }
+      } else {
+        const r=rnd2();
+        if (r<0.45) { status='submitted'; submittedAt='2026-08-16'; }
+        else if (r<0.55) { status='rejected'; submittedAt='2026-08-16'; approvedBy=mgrs[u.id%mgrs.length]; rejectionComment='Please check your OT hours and meal claims, then resubmit.'; }
+        else { status='draft'; }
+      }
+
+      const ts = { id:Store.nextId.ts++, userId:u.id, year:2026, month, status, submittedAt, approvedAt, approvedBy, rejectionComment, entries };
+      recalcTs(ts);
+      Store.timesheets.push(ts);
+    }
+  });
+}
+
 // ── Bootstrap ────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', ()=>{
+  seedMockData();
   $('lform').addEventListener('submit', e=>{ e.preventDefault(); tryLogin($('lu').value.trim(),$('lp').value.trim()); });
 });

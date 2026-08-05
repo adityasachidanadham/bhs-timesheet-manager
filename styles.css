@@ -159,11 +159,32 @@ img { max-width: 100%; }
   padding: 5rem 4rem;
   position: relative;
   z-index: 1;
-  background: rgba(255,255,255,0.72);
-  backdrop-filter: blur(24px) saturate(160%);
-  -webkit-backdrop-filter: blur(24px) saturate(160%);
+  overflow: hidden;
   border-right: 1px solid rgba(37,99,235,0.10);
-  box-shadow: inset -1px 0 0 rgba(255,255,255,0.6);
+}
+
+/* Truck photo backdrop (drop bhs-truck.jpg beside index.html). Gradient fallback if missing. */
+.login-photo-bg {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(rgba(240,244,255,0.18), rgba(240,244,255,0.18)),
+    image-set(url('bhs-truck.jpg') 1x, url('bhs-truck@2x.jpg') 2x) center / cover no-repeat,
+    linear-gradient(160deg, #dfe9ff 0%, #b9cdf5 45%, #93b3ea 100%);
+  background-position: center;
+  background-size: cover;
+  image-rendering: -webkit-optimize-contrast;
+  filter: saturate(1.06) contrast(1.02);
+  transform: translateZ(0);
+}
+/* Fallback for browsers without image-set */
+@supports not (background: image-set(url('x.jpg') 1x)) {
+  .login-photo-bg {
+    background:
+      linear-gradient(rgba(240,244,255,0.18), rgba(240,244,255,0.18)),
+      url('bhs-truck.jpg') center / cover no-repeat,
+      linear-gradient(160deg, #dfe9ff 0%, #b9cdf5 45%, #93b3ea 100%);
+  }
 }
 
 /* Decorative geometric accent on the left panel */
@@ -191,13 +212,24 @@ img { max-width: 100%; }
 }
 
 .login-branding { max-width: 460px; position: relative; z-index: 1; }
+.login-glass {
+  background: rgba(255,255,255,0.55);
+  backdrop-filter: blur(28px) saturate(180%);
+  -webkit-backdrop-filter: blur(28px) saturate(180%);
+  border: 1px solid rgba(255,255,255,0.65);
+  border-radius: 24px;
+  padding: 2.6rem 2.8rem;
+  box-shadow:
+    0 8px 32px rgba(11,31,107,0.16),
+    inset 0 1px 0 rgba(255,255,255,0.85);
+}
 
 .login-logo-wrap {
   display: inline-flex;
   margin-bottom: 0.5rem;
   animation: fadeUp 0.8s var(--ease-out) both;
 }
-.bhs-logo-login { height: 110px; width: auto; display: block; }
+.bhs-logo-login { height: 132px; width: auto; display: block; }
 
 .login-headline {
   font-family: sans-serif;
@@ -1259,9 +1291,26 @@ img { max-width: 100%; }
 
 /* ── Responsive ─────────────────────────────────────────────── */
 @media (max-width: 960px) {
-  .login-left { display: none; }
-  .login-right { width: 100%; }
+  #login-page { flex-direction: column; }
+  .login-left {
+    flex: none;
+    min-height: 300px;
+    padding: 2.5rem 1.5rem;
+    border-right: none;
+    border-bottom: 1px solid rgba(37,99,235,0.10);
+  }
+  .login-glass { padding: 1.6rem 1.8rem; max-width: 360px; }
+  .bhs-logo-login { height: 96px; }
+  .login-headline { font-size: 1.7rem; margin-bottom: 0; }
+  .login-right { width: 100%; padding: 2rem 1.25rem 3rem; }
   .an-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 480px) {
+  .login-left { min-height: 240px; padding: 1.8rem 1rem; }
+  .login-glass { padding: 1.2rem 1.4rem; }
+  .bhs-logo-login { height: 80px; }
+  .login-headline { font-size: 1.4rem; }
+  .login-corner-stripes { height: 14px; top: 0.8rem; left: 1rem; }
 }
 @media (max-width: 680px) {
   .page-wrap { padding: 1.25rem 1rem; }
@@ -1360,15 +1409,27 @@ td.tsx-act-cell { width: 100%; }
   max-height: 140px;
   overflow-y: auto;
 }
+/* Explicit styling — overrides the generic .f-group label rules (uppercase, muted, tiny)
+   that made these names hard to read inside modals */
+.f-group .nu-mgr-item,
 .nu-mgr-item {
-  display: inline-flex;
+  display: inline-flex !important;
   align-items: center;
   gap: 0.45rem;
-  font-size: 0.85rem;
+  font-size: 0.85rem !important;
+  font-weight: 500 !important;
+  color: var(--text-primary) !important;
+  text-transform: none !important;
+  letter-spacing: normal !important;
+  margin-bottom: 0 !important;
   cursor: pointer;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  overflow: visible;
+}
+.nu-mgr-item input[type="checkbox"] {
+  width: 15px; height: 15px;
+  accent-color: var(--bhs-blue-mid);
+  flex-shrink: 0;
 }
 .admin-actions { white-space: nowrap; text-align: right; }
 .admin-actions .btn { margin-left: 0.3rem; padding: 0.3rem 0.6rem; font-size: 0.72rem; }
@@ -1387,3 +1448,16 @@ td.tsx-act-cell { width: 100%; }
 }
 .edit-user-btn:hover { background: var(--bhs-blue-pale); border-color: rgba(37,99,235,0.3); }
 .del-user-btn:hover { background: var(--red-bg); border-color: rgba(239,68,68,0.3); }
+
+/* ── BUILD-IT badge next to nav logo ────────────────────────── */
+.nav-buildit {
+  margin-left: 0.6rem;
+  padding: 0.22rem 0.6rem;
+  background: linear-gradient(135deg, var(--bhs-blue-mid), var(--bhs-blue));
+  color: #fff;
+  font-size: 0.66rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  border-radius: var(--r-xs);
+  white-space: nowrap;
+}
