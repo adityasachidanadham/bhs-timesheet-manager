@@ -79,7 +79,7 @@ const Store = {
   teams: ['AMHS','ATTACHMENT','ASML'],
   countries:  ['Singapore','USA','Netherlands','China','Japan','Ireland','Taiwan','Korea','Israel'],
   customers:  ['HQ','Micron','GF','SSW','UMC','SOITEC','VSMC','STM','TSMC','Nearfield','Intel','ASML','Sony','YMTC','Samsung'],
-  equipment:  ['SRC','G Series','Stocker','EUV','Cannon','Photo','Metrology'],
+  equipment:  ['G Series','SRC','NXT2050','NXT870B','PAS850C','NXT1950X','PAS450F','EUV PI SAG 70S','EUV MI FH13','EUV PI PEN2','EUV 2','EUV 3'],
   standbyTypes: ['Standby','Annual Leave','Medical','Off in Lieu','Carry Forward Leave','Birthday Leave','Unpaid Leave'],
   leaveTypes: ['Annual Leave','Medical','Off in Lieu','Carry Forward Leave','Birthday Leave','Unpaid Leave'],
   allowanceTypes: ['Meal Allowance','Transport Allowance','Shift Allowance','Project Allowance'],
@@ -134,6 +134,11 @@ function countryOptions(sel) {
 // Customer dropdown for timesheet rows
 function customerOptions(sel) {
   return `<option value="">–</option>` + Store.customers.map(c=>`<option value="${c}" ${sel===c?'selected':''}>${c}</option>`).join('');
+}
+
+// Equipment dropdown for timesheet rows
+function equipmentOptions(sel) {
+  return `<option value="">–</option>` + Store.equipment.map(c=>`<option value="${c}" ${sel===c?'selected':''}>${c}</option>`).join('');
 }
 
 // Numeric hours dropdown (0–16 in 0.5 steps)
@@ -553,8 +558,7 @@ function buildRow(e, ts, editable) {
         <select class="ts-input tsx-ctry" onchange="upd(${ts.id},${e.id},'customer',this.value)">${customerOptions(e.customer)}</select>
       </td>
       <td>
-        <input class="ts-input tsx-tp" type="text" value="${e.equipment||''}"
-          onchange="upd(${ts.id},${e.id},'equipment',this.value)">
+        <select class="ts-input tsx-ctry" onchange="upd(${ts.id},${e.id},'equipment',this.value)">${equipmentOptions(e.equipment)}</select>
       </td>
       <td class="tsx-act-cell">
         <textarea class="ts-input tsx-act" rows="1" placeholder="Activity…"
@@ -786,7 +790,7 @@ function reviewRowHtml(e) {
     <td><select class="ts-input tsx-hrs" data-e="${e.id}" data-f="sbHrs">${reviewHourOptions(e.sbHrs)}</select></td>
     <td><select class="ts-input tsx-ctry" data-e="${e.id}" data-f="country">${countryOptions(e.country)}</select></td>
     <td><select class="ts-input tsx-ctry" data-e="${e.id}" data-f="customer">${customerOptions(e.customer)}</select></td>
-    <td>${inp('equipment','tsx-tp',e.equipment)}</td>
+    <td><select class="ts-input tsx-ctry" data-e="${e.id}" data-f="equipment">${equipmentOptions(e.equipment)}</select></td>
     <td class="tsx-act-cell"><textarea class="ts-input tsx-act" rows="1" data-e="${e.id}" data-f="description">${e.description||''}</textarea></td>
     <td><input class="ts-input tsx-sm" type="number" min="0" max="24" step="0.5" data-e="${e.id}" data-f="nightHrs" value="${e.nightHrs||0}"></td>
     <td><input class="ts-input tsx-sm" type="number" min="0" max="24" step="0.5" data-e="${e.id}" data-f="nightOtHrs" value="${e.nightOtHrs||0}"></td>
@@ -859,7 +863,7 @@ function openPrintTab(tsId) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <base href="${document.baseURI}">
     <title>Timesheet — ${u?.name} · ${MONTHS[ts.month-1]} ${ts.year}</title>
-    <link rel="stylesheet" href="styles.css?v=25">
+    <link rel="stylesheet" href="styles.css?v=26">
     </head><body style="background:#fff">
     <div class="page-wrap">
       <div class="sec-header">
@@ -933,7 +937,7 @@ function openReviewTab(tsId) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <base href="${document.baseURI}">
     <title>Review — ${u?.name} · ${MONTHS[ts.month-1]} ${ts.year}</title>
-    <link rel="stylesheet" href="styles.css?v=25">
+    <link rel="stylesheet" href="styles.css?v=26">
     </head><body style="background:var(--bg)">
     <div class="page-wrap">
       <div class="sec-header">
@@ -1044,7 +1048,7 @@ function openReviewTab(tsId) {
 function renderAnalytics(el) {
   el.innerHTML = `
     <div class="sec-header">
-      <div class="sec-title"><h1>Analytics</h1><p>OT clocked — by country, employee and customer</p></div>
+      <div class="sec-title"><h1>Analytics</h1><p>OT clocked — by country, customer, equipment and employee</p></div>
       <div class="sec-actions">
         <select class="f-select" id="an-m" onchange="anMonthChanged()">
           <option value="">All Months</option>
@@ -1102,10 +1106,11 @@ function redrawAnalytics() {
   let entries=all.flatMap(t=>t.entries.map(e=>({...e,userId:t.userId,tsYear:t.year,tsMonth:t.month})));
   if (mF && wF) entries = entries.filter(e=>e.date && periodWeek(e.date, e.tsYear, e.tsMonth)===wF);
 
-  const byCountry={}, byCustomer={}, byEmp={};
+  const byCountry={}, byCustomer={}, byEq={}, byEmp={};
   entries.forEach(e=>{
     if(e.country){ if(!byCountry[e.country]) byCountry[e.country]={ot15:0,ot20:0}; byCountry[e.country].ot15+=e.ot15||0; byCountry[e.country].ot20+=e.ot20||0; }
     if(e.customer){ if(!byCustomer[e.customer]) byCustomer[e.customer]={ot15:0,ot20:0}; byCustomer[e.customer].ot15+=e.ot15||0; byCustomer[e.customer].ot20+=e.ot20||0; }
+    if(e.equipment){ if(!byEq[e.equipment]) byEq[e.equipment]={ot15:0,ot20:0}; byEq[e.equipment].ot15+=e.ot15||0; byEq[e.equipment].ot20+=e.ot20||0; }
     const nm=userBy(e.userId)?.name||'Unknown';
     if(!byEmp[nm]) byEmp[nm]={ot15:0,ot20:0};
     byEmp[nm].ot15+=e.ot15||0; byEmp[nm].ot20+=e.ot20||0;
@@ -1113,6 +1118,7 @@ function redrawAnalytics() {
 
   const maxC=Math.max(...Object.values(byCountry).map(v=>v.ot15+v.ot20),1);
   const maxCu=Math.max(...Object.values(byCustomer).map(v=>v.ot15+v.ot20),1);
+  const maxEq=Math.max(...Object.values(byEq).map(v=>v.ot15+v.ot20),1);
   const tot15=entries.reduce((s,e)=>s+(e.ot15||0),0);
   const tot20=entries.reduce((s,e)=>s+(e.ot20||0),0);
   const wLbl = (mF && wF) ? ` · Week ${wF}` : '';
@@ -1143,6 +1149,17 @@ function redrawAnalytics() {
             <div class="an-bar-item">
               <div class="an-bar-label-row"><span class="an-bar-name">${c}</span><div class="an-bar-vals"><span class="ot-tag ot-tag-15">1.5× ${fmt(v.ot15)}h</span><span class="ot-tag ot-tag-20">2.0× ${fmt(v.ot20)}h</span><span class="an-bar-total">${fmt(v.ot15+v.ot20)}h</span></div></div>
               <div class="an-track"><div class="an-fill an-fill-15" style="width:${(v.ot15/maxCu)*100}%"></div><div class="an-fill an-fill-20" style="width:${(v.ot20/maxCu)*100}%"></div></div>
+            </div>`).join('')||'<p class="td-muted" style="font-size:0.85rem">No data</p>'}
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-head"><h3>By Equipment (EQ)</h3></div>
+        <div class="card-body">
+          <div class="an-legend"><div class="an-legend-item"><div class="an-legend-dot" style="background:var(--ot15)"></div>OT 1.5×</div><div class="an-legend-item"><div class="an-legend-dot" style="background:var(--ot20)"></div>OT 2.0×</div></div>
+          ${Object.entries(byEq).sort((a,b)=>(b[1].ot15+b[1].ot20)-(a[1].ot15+a[1].ot20)).map(([c,v])=>`
+            <div class="an-bar-item">
+              <div class="an-bar-label-row"><span class="an-bar-name">${c}</span><div class="an-bar-vals"><span class="ot-tag ot-tag-15">1.5× ${fmt(v.ot15)}h</span><span class="ot-tag ot-tag-20">2.0× ${fmt(v.ot20)}h</span><span class="an-bar-total">${fmt(v.ot15+v.ot20)}h</span></div></div>
+              <div class="an-track"><div class="an-fill an-fill-15" style="width:${(v.ot15/maxEq)*100}%"></div><div class="an-fill an-fill-20" style="width:${(v.ot20/maxEq)*100}%"></div></div>
             </div>`).join('')||'<p class="td-muted" style="font-size:0.85rem">No data</p>'}
         </div>
       </div>
@@ -1429,7 +1446,7 @@ function seedMockData() {
   const ACT = ['Preventive maintenance','Corrective repair','Installation support','System calibration',
                'Software upgrade','Parts replacement','Site survey','Customer training','Escort duty',
                'Troubleshooting','Relocation support','Commissioning','Quality inspection','Standby coverage'];
-  const EQS = ['SRC','G Series','Stocker','EUV','Cannon','Photo','Metrology','OHT','Sorter','AGV'];
+  const EQS = ['G Series','SRC','NXT2050','NXT870B','PAS850C','NXT1950X','PAS450F','EUV PI SAG 70S','EUV MI FH13','EUV PI PEN2','EUV 2','EUV 3'];
   const LOCS= [['Singapore',0.72],['Taiwan',0.08],['Japan',0.06],['Netherlands',0.04],['China',0.04],['USA',0.03],['Korea',0.03]];
   const CUST= ['Micron','GF','UMC','SSW','TSMC','SOITEC','VSMC','STM','ASML','HQ','Intel','Sony'];
   const techs = Store.users.filter(u=>u.role==='tech');
