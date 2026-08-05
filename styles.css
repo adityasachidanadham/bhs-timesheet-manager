@@ -1322,3 +1322,15 @@ td.tsx-act-cell { width: 100%; }
 .ts-ph-legend-title { font-weight: 700; color: var(--text-secondary); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em; }
 .ts-ph-item { display: inline-flex; align-items: center; gap: 0.3rem; color: var(--red); font-weight: 600; }
 .ts-ph-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--red); flex-shrink: 0; }
+
+/* ── Approvals team group rows ──────────────────────────────── */
+.apl-team-row td {
+  background: var(--bg) !important;
+  font-weight: 800;
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--bhs-navy);
+  padding: 0.55rem 1rem !important;
+  border-top: 1px solid var(--border);
+}
