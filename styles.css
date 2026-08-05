@@ -817,8 +817,8 @@ img { max-width: 100%; }
 .ts-input {
   width: 100%;
   padding: 0.42rem 0.65rem;
-  background: var(--bg-input);
-  border: 1px solid transparent;
+  background: #fafafa;
+  border: 1px solid #d9d9de;
   border-radius: var(--r-sm);
   font-size: 0.83rem;
   color: var(--text-primary);
