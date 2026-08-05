@@ -103,16 +103,10 @@ const holNm  = d => Store.publicHolidays.find(h => h.date === d)?.name || '';
 const userBy = id => Store.users.find(u => u.id === id);
 const isLeave= type => Store.leaveTypes.includes(type);
 
-const TIME_OPTS = Array.from({length:48},(_,i)=>`${String(Math.floor(i/2)).padStart(2,'0')}:${i%2?'30':'00'}`);
-function timeOptions(sel) {
-  return `<option value="">--:--</option>` + TIME_OPTS.map(t=>`<option value="${t}" ${sel===t?'selected':''}>${t}</option>`).join('');
-}
-function hoursFromTimes(from, to) {
-  if (!from || !to) return 0;
-  const [fh,fm]=from.split(':').map(Number), [th,tm]=to.split(':').map(Number);
-  let h = (th+tm/60)-(fh+fm/60);
-  if (h < 0) h += 24; // overnight shift
-  return Math.round(h*2)/2;
+// Numeric hours dropdown (0–16 in 0.5 steps)
+const HOUR_OPTS = Array.from({length:33},(_,i)=>i/2);
+function hourOptions(sel) {
+  return HOUR_OPTS.map(h=>`<option value="${h}" ${(sel||0)===h?'selected':''}>${h===0?'0':fmt(h)}</option>`).join('');
 }
 
 function calcOT(date, workHrs) {
@@ -121,7 +115,8 @@ function calcOT(date, workHrs) {
   const h = isHol(date);
   let reg=0, ot15=0, ot20=0;
   if (h || d===0) { ot20 = workHrs; }           // PH or Sunday → all OT2.0
-  else            { reg=Math.min(workHrs,8); ot15=Math.max(0,workHrs-8); } // Mon–Sat → 8 reg then OT1.5
+  else if (d===6) { reg=Math.min(workHrs,4); ot15=Math.max(0,workHrs-4); } // Saturday → 4h normal, rest OT1.5
+  else            { reg=Math.min(workHrs,8); ot15=Math.max(0,workHrs-8); } // Mon–Fri  → 8h normal, rest OT1.5
   return { reg, ot15, ot20 };
 }
 
@@ -363,15 +358,16 @@ function renderTs(el) {
           <thead>${me.role==='tech'?`
           <tr>
             <th rowspan="2">Date</th>
-            <th rowspan="2">From</th>
-            <th rowspan="2">To</th>
+            <th rowspan="2">Deployed<br>Hrs</th>
+            <th rowspan="2">Standby<br>Hrs</th>
             <th rowspan="2">Location</th>
             <th rowspan="2">Activity</th>
-            <th rowspan="2">Night Shift Hrs</th>
-            <th rowspan="2">Night Shift OT Hrs</th>
-            <th rowspan="2">OT Hrs</th>
-            <th rowspan="2">Meal Lunch</th>
-            <th rowspan="2">Meal Dinner</th>
+            <th rowspan="2">Night<br>Shift Hrs</th>
+            <th rowspan="2">Night<br>Shift OT</th>
+            <th rowspan="2">OT<br>1.5×</th>
+            <th rowspan="2">OT<br>2.0×</th>
+            <th rowspan="2">Meal<br>Lunch</th>
+            <th rowspan="2">Meal<br>Dinner</th>
             <th colspan="3">Transport Claim</th>
             <th rowspan="2">Remarks</th>
           </tr>
@@ -422,7 +418,7 @@ function ensureTechMonth() {
   for (let d=1; d<=daysInMonth; d++) {
     const dateStr = `${tsYear}-${String(tsMonth).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
     if (!ts.entries.some(e => e.date === dateStr)) {
-      ts.entries.push({ id:Store.nextId.entry++, date:dateStr, customer:'', workHrs:0, sbHrs:0, sbType:'Standby', description:'', country:'', equipment:'', allowances:[], ot15:0, ot20:0, timeFrom:'', timeTo:'', nightHrs:0, nightOtHrs:0, mealLunch:0, mealDinner:0, tpFrom:'', tpTo:'', tpPre:'', remarks:'' });
+      ts.entries.push({ id:Store.nextId.entry++, date:dateStr, customer:'', workHrs:0, sbHrs:0, sbType:'Standby', description:'', country:'', equipment:'', allowances:[], ot15:0, ot20:0, nightHrs:0, nightOtHrs:0, mealLunch:0, mealDinner:0, tpFrom:'', tpTo:'', tpPre:'', remarks:'' });
     }
   }
   ts.entries.sort((a,b) => (a.date||'').localeCompare(b.date||''));
@@ -513,11 +509,17 @@ function renderTsAlerts(ts) {
   const el = $('ts-alerts');
   el.innerHTML = '';
   if (!ts) return;
+  // Only the manager-rejection notice stays on the page; validation warnings open in a popup on submit.
   if (ts.status==='rejected' && ts.rejectionComment) {
     el.innerHTML = `<div class="alert-banner alert-danger show"><div class="alert-icon">❌</div><div class="alert-body"><strong>Rejected by Manager</strong>${ts.rejectionComment}<br><small>Please correct and resubmit.</small></div></div>`;
-    return;
   }
+}
+
+function collectWarnings(ts) {
   const warnings = [];
+  if (!ts) return warnings;
+  // Deployed/Standby split rule
+  ts.entries.forEach(e=>{ const err=splitRuleError(e); if (err) warnings.push(err); });
   const totalOT = ts.entries.reduce((s,e)=>s+(e.ot15||0)+(e.ot20||0),0);
   if (totalOT>72) warnings.push(`Total OT (${fmt(totalOT)}h) exceeds the 72-hour monthly limit.`);
   // Daily minimum check
@@ -533,16 +535,38 @@ function renderTsAlerts(ts) {
     weekHrs[wk]=(weekHrs[wk]||0)+(e.workHrs||0)+(e.sbHrs||0);
   });
   Object.entries(weekHrs).forEach(([w,h])=>{ if(h<44&&h>0) warnings.push(`${w}: ${fmt(h)}h total (minimum 44h/week required).`); });
-  if (warnings.length) {
-    el.innerHTML = `<div class="alert-banner alert-warn show"><div class="alert-icon">⚠️</div><div class="alert-body"><strong>Validation Warnings</strong><ul>${warnings.map(w=>`<li>${w}</li>`).join('')}</ul><small>You may still submit — manager will review.</small></div></div>`;
+  return warnings;
+}
+
+function showWarningsModal(warnings, tsId) {
+  let ov = $('warn-modal');
+  if (!ov) {
+    ov = document.createElement('div');
+    ov.className = 'overlay'; ov.id = 'warn-modal';
+    ov.innerHTML = `
+      <div class="modal">
+        <div class="modal-head"><h3>⚠️ Please Check Your Timesheet</h3><button class="modal-x" onclick="closeOverlay('warn-modal')">✕</button></div>
+        <div class="modal-body"><ul id="warn-list" style="padding-left:1.1rem;display:flex;flex-direction:column;gap:0.5rem;font-size:0.88rem"></ul></div>
+        <div class="modal-foot" id="warn-foot"></div>
+      </div>`;
+    document.body.appendChild(ov);
   }
+  $('warn-list').innerHTML = warnings.map(w=>`<li>${w}</li>`).join('');
+  const foot = $('warn-foot');
+  foot.innerHTML = '';
+  const back=document.createElement('button'); back.className='btn btn-secondary'; back.textContent='Go Back & Fix';
+  back.onclick=()=>closeOverlay('warn-modal');
+  const anyway=document.createElement('button'); anyway.className='btn btn-primary'; anyway.textContent='Submit Anyway';
+  anyway.onclick=()=>{ closeOverlay('warn-modal'); doSubmitTs(tsId); };
+  foot.appendChild(back); foot.appendChild(anyway);
+  openOverlay('warn-modal');
 }
 
 function renderTsRows(ts, editable) {
   const body = $('ts-body');
   body.innerHTML = '';
   if (!ts || !ts.entries.length) {
-    body.innerHTML = `<tr><td colspan="${me.role==='tech'?14:11}"><div class="empty"><div class="empty-ico">📋</div><p>No entries yet${me.role==='tech'?'':' — click "Add Row" to begin'}</p></div></td></tr>`;
+    body.innerHTML = `<tr><td colspan="${me.role==='tech'?15:11}"><div class="empty"><div class="empty-ico">📋</div><p>No entries yet${me.role==='tech'?'':' — click "Add Row" to begin'}</p></div></td></tr>`;
     return;
   }
   ts.entries.forEach(e => buildRow(e, ts, editable));
@@ -557,16 +581,16 @@ function buildRow(e, ts, editable) {
 
   if (editable && me.role==='tech') {
     // Ensure new fields exist (legacy demo rows)
-    ['timeFrom','timeTo','tpFrom','tpTo','tpPre','remarks'].forEach(k=>{ if(e[k]===undefined) e[k]=''; });
+    ['tpFrom','tpTo','tpPre','remarks'].forEach(k=>{ if(e[k]===undefined) e[k]=''; });
     ['nightHrs','nightOtHrs','mealLunch','mealDinner'].forEach(k=>{ if(e[k]===undefined) e[k]=0; });
     const dayShort = e.date ? DAYS[dow(e.date)] : '';
     tr.innerHTML = `
       <td class="ts-day-cell"><strong>${fmtD(e.date)}</strong><span class="ts-day-name">${dayShort}</span></td>
       <td>
-        <select class="ts-input tsx-time" onchange="upd(${ts.id},${e.id},'timeFrom',this.value)">${timeOptions(e.timeFrom)}</select>
+        <select class="ts-input tsx-hrs" onchange="upd(${ts.id},${e.id},'workHrs',parseFloat(this.value)||0)">${hourOptions(e.workHrs)}</select>
       </td>
       <td>
-        <select class="ts-input tsx-time" onchange="upd(${ts.id},${e.id},'timeTo',this.value)">${timeOptions(e.timeTo)}</select>
+        <select class="ts-input tsx-hrs" onchange="upd(${ts.id},${e.id},'sbHrs',parseFloat(this.value)||0)">${hourOptions(e.sbHrs)}</select>
       </td>
       <td>
         <input class="ts-input tsx-loc" type="text" value="${e.customer||''}" placeholder="Location"
@@ -585,7 +609,10 @@ function buildRow(e, ts, editable) {
           onchange="upd(${ts.id},${e.id},'nightOtHrs',parseFloat(this.value)||0)">
       </td>
       <td>
-        <div class="tsx-ot ${e.ot20>0?'ot-tag-20':'ot-tag-15'}" id="otx-${e.id}">${otDisplay(e)}</div>
+        <div class="tsx-ot ot-tag-15" id="ot15-${e.id}">${e.ot15>0?fmt(e.ot15)+'h':'–'}</div>
+      </td>
+      <td>
+        <div class="tsx-ot ot-tag-20" id="ot20-${e.id}">${e.ot20>0?fmt(e.ot20)+'h':'–'}</div>
       </td>
       <td>
         <select class="ts-input tsx-meal" onchange="upd(${ts.id},${e.id},'mealLunch',parseInt(this.value)||0)">
@@ -622,13 +649,14 @@ function buildRow(e, ts, editable) {
   if (!editable && me.role==='tech') {
     tr.innerHTML = `
       <td class="ts-day-cell"><strong>${fmtD(e.date)}</strong><span class="ts-day-name">${e.date?DAYS[dow(e.date)]:''}</span></td>
-      <td>${e.timeFrom||'–'}</td>
-      <td>${e.timeTo||'–'}</td>
+      <td style="text-align:center">${fmt(e.workHrs||0)}</td>
+      <td style="text-align:center">${fmt(e.sbHrs||0)}</td>
       <td>${e.customer||'–'}</td>
       <td class="tsx-act-cell">${e.description||'–'}</td>
       <td style="text-align:center">${e.nightHrs||'–'}</td>
       <td style="text-align:center">${e.nightOtHrs||'–'}</td>
-      <td><div class="tsx-ot ${e.ot20>0?'ot-tag-20':'ot-tag-15'}">${otDisplay(e)}</div></td>
+      <td><div class="tsx-ot ot-tag-15">${e.ot15>0?fmt(e.ot15)+'h':'–'}</div></td>
+      <td><div class="tsx-ot ot-tag-20">${e.ot20>0?fmt(e.ot20)+'h':'–'}</div></td>
       <td style="text-align:center">${e.mealLunch?'1':'–'}</td>
       <td style="text-align:center">${e.mealDinner?'1':'–'}</td>
       <td>${e.tpFrom||'–'}</td>
@@ -845,10 +873,14 @@ function refreshAllowanceUI(tsId, entryId) {
   renderTsSummary(ts);
 }
 
-function otDisplay(e) {
-  if (e.ot20>0) return fmt(e.ot20)+'h ×2.0';
-  if (e.ot15>0) return fmt(e.ot15)+'h ×1.5';
-  return '–';
+// Deployed + Standby split rule: standby only allowed within the 8-hour day.
+// Valid: split the 8h across deployed+standby, OR all hours in deployed (OT case).
+function splitRuleError(e) {
+  const wh = e.workHrs||0, sb = e.sbHrs||0;
+  if (sb > 0 && (wh + sb) > 8) {
+    return `${fmtD(e.date)}: Deployed (${fmt(wh)}h) + Standby (${fmt(sb)}h) exceeds 8h. Standby does not count as OT — either split 8h between Deployed and Standby, or put all hours in Deployed if there is overtime.`;
+  }
+  return null;
 }
 
 function upd(tsId, entryId, field, val) {
@@ -856,14 +888,11 @@ function upd(tsId, entryId, field, val) {
   const e  = ts?.entries.find(x=>x.id===entryId);
   if (!e) return;
   e[field] = val;
-  // Tech rows: derive working hours from the From/To times
-  if (field==='timeFrom' || field==='timeTo') {
-    e.workHrs = hoursFromTimes(e.timeFrom, e.timeTo);
+  if (me.role==='tech' && (field==='workHrs' || field==='sbHrs')) {
+    const err = splitRuleError(e);
+    if (err) toast(err, 'error');
   }
   recalcTs(ts);
-  // Refresh OT displays (tech combined cell + manager/admin split cells)
-  const ox=$(`otx-${entryId}`);
-  if (ox) { ox.textContent = otDisplay(e); ox.className = `tsx-ot ${e.ot20>0?'ot-tag-20':'ot-tag-15'}`; }
   const o15=$(`ot15-${entryId}`), o20=$(`ot20-${entryId}`);
   if (o15) o15.textContent = e.ot15>0?fmt(e.ot15)+'h':'–';
   if (o20) o20.textContent = e.ot20>0?fmt(e.ot20)+'h':'–';
@@ -907,6 +936,14 @@ function renderTsFooter(ts) {
 function submitTs(tsId) {
   const ts = Store.timesheets.find(t=>t.id===tsId);
   if (!ts?.entries.length) { toast('Add at least one entry first.','error'); return; }
+  const warnings = collectWarnings(ts);
+  if (warnings.length) { showWarningsModal(warnings, tsId); return; }
+  doSubmitTs(tsId);
+}
+
+function doSubmitTs(tsId) {
+  const ts = Store.timesheets.find(t=>t.id===tsId);
+  if (!ts) return;
   ts.status='submitted';
   ts.submittedAt=new Date().toISOString().slice(0,10);
   ts.rejectionComment='';
