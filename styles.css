@@ -1291,13 +1291,12 @@ img { max-width: 100%; }
 .ts-table-tech.ts-table .row-holiday td:first-child { border-left: none; }
 
 /* Compact tech layout — fits one page on web, minimal scrolling on mobile */
-.ts-table-tech { min-width: 980px; }
+.ts-table-tech { min-width: 1060px; }
 .ts-table-tech thead th { font-size: 0.62rem; padding: 0.35rem 0.15rem; text-align: center; line-height: 1.25; }
 .ts-table-tech tbody td { padding: 0.22rem 0.15rem; }
 .ts-table-tech .ts-input { padding: 0.3rem 0.3rem; font-size: 0.78rem; }
 .ts-table-tech .ts-day-cell { padding-left: 0.5rem; }
 .tsx-hrs    { width: 58px; text-align: center; }
-.tsx-loc    { width: 88px; }
 .tsx-act    { width: 100%; min-width: 170px; resize: vertical; min-height: 32px; line-height: 1.3; }
 td.tsx-act-cell { width: 100%; }
 .tsx-sm     { width: 48px; text-align: center; }

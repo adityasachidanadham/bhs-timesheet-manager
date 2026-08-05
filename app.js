@@ -354,13 +354,15 @@ function renderTs(el) {
         <div id="ts-actions" style="display:flex;gap:0.5rem;flex-wrap:wrap"></div>
       </div>
       <div class="ts-table-wrap">
-        <table class="apple-table ts-table ${me.role==='tech'?'ts-table-tech':''}" id="ts-tbl">
-          <thead>${me.role==='tech'?`
+        <table class="apple-table ts-table ${usesDayGrid()?'ts-table-tech':''}" id="ts-tbl">
+          <thead>${usesDayGrid()?`
           <tr>
             <th rowspan="2">Date</th>
             <th rowspan="2">Deployed<br>Hrs</th>
             <th rowspan="2">Standby<br>Hrs</th>
-            <th rowspan="2">Location</th>
+            <th rowspan="2">Country</th>
+            <th rowspan="2">Customer</th>
+            <th rowspan="2">EQ</th>
             <th rowspan="2">Activity</th>
             <th rowspan="2">Night<br>Shift Hrs</th>
             <th rowspan="2">Night<br>Shift OT</th>
@@ -407,7 +409,10 @@ function reloadTs() {
 }
 
 
-// For tech users: guarantee one row per calendar day of the selected month
+// Roles that use the day-grid "My Timesheet" layout (tech + manager)
+function usesDayGrid() { return me.role==='tech' || me.role==='manager'; }
+
+// Guarantee one row per calendar day of the selected month
 function ensureTechMonth() {
   let ts = getTsFor(me.id, tsYear, tsMonth);
   if (ts && ts.status!=='draft' && ts.status!=='rejected') return ts; // never touch submitted/approved
@@ -441,7 +446,7 @@ function renderPhLegend() {
 }
 
 function loadTs() {
-  let ts = (me.role==='tech') ? ensureTechMonth() : getTsFor(me.id, tsYear, tsMonth);
+  let ts = usesDayGrid() ? ensureTechMonth() : getTsFor(me.id, tsYear, tsMonth);
   const editable = !ts || ts.status==='draft' || ts.status==='rejected';
   const locked   = ts && (ts.status==='submitted' || ts.status==='approved');
 
@@ -455,7 +460,7 @@ function loadTs() {
 
   // Add row button (not for tech — their month is auto-generated day by day)
   const wrap = $('ts-add-row-wrap');
-  wrap.innerHTML = (editable && me.role!=='tech')
+  wrap.innerHTML = (editable && !usesDayGrid())
     ? `<button class="add-row-trigger" onclick="addRow(${ts?.id||'null'})">＋ Add Row</button>`
     : '';
 }
@@ -470,7 +475,7 @@ function renderTsActions(ts, editable) {
 function renderTsSummary(ts) {
   const el = $('ts-summary');
   if (!el) return;
-  if (me.role==='tech') { el.innerHTML=''; return; }
+  if (usesDayGrid()) { el.innerHTML=''; return; }
   if (!ts || !ts.entries.length) { el.innerHTML=''; return; }
   const totalWork = ts.entries.reduce((s,e)=>s+(e.workHrs||0),0);
   const totalSb   = ts.entries.reduce((s,e)=>s+(e.sbHrs||0),0);
@@ -586,7 +591,7 @@ function renderTsRows(ts, editable) {
   const body = $('ts-body');
   body.innerHTML = '';
   if (!ts || !ts.entries.length) {
-    body.innerHTML = `<tr><td colspan="${me.role==='tech'?16:11}"><div class="empty"><div class="empty-ico">📋</div><p>No entries yet${me.role==='tech'?'':' — click "Add Row" to begin'}</p></div></td></tr>`;
+    body.innerHTML = `<tr><td colspan="${usesDayGrid()?18:11}"><div class="empty"><div class="empty-ico">📋</div><p>No entries yet${me.role==='tech'?'':' — click "Add Row" to begin'}</p></div></td></tr>`;
     return;
   }
   ts.entries.forEach(e => buildRow(e, ts, editable));
@@ -599,7 +604,7 @@ function buildRow(e, ts, editable) {
   if (e.date && dow(e.date)===0) tr.classList.add('row-sunday');
   const dayInfo = e.date ? `${DAYS[dow(e.date)]}${isHol(e.date)?` · 🔴 ${holNm(e.date)}`:''}` : '';
 
-  if (editable && me.role==='tech') {
+  if (editable && usesDayGrid()) {
     // Ensure new fields exist (legacy demo rows)
     ['tpFrom','tpTo','tpPre','shiftAllowance','remarks'].forEach(k=>{ if(e[k]===undefined) e[k]=''; });
     ['nightHrs','nightOtHrs','mealLunch','mealDinner'].forEach(k=>{ if(e[k]===undefined) e[k]=0; });
@@ -613,8 +618,16 @@ function buildRow(e, ts, editable) {
         <select class="ts-input tsx-hrs" onchange="upd(${ts.id},${e.id},'sbHrs',parseFloat(this.value)||0)">${hourOptions(e.sbHrs)}</select>
       </td>
       <td>
-        <input class="ts-input tsx-loc" type="text" value="${e.customer||''}" placeholder="Location"
+        <input class="ts-input tsx-tp" type="text" value="${e.country||''}"
+          onchange="upd(${ts.id},${e.id},'country',this.value)">
+      </td>
+      <td>
+        <input class="ts-input tsx-tp" type="text" value="${e.customer||''}"
           onchange="upd(${ts.id},${e.id},'customer',this.value)">
+      </td>
+      <td>
+        <input class="ts-input tsx-tp" type="text" value="${e.equipment||''}"
+          onchange="upd(${ts.id},${e.id},'equipment',this.value)">
       </td>
       <td class="tsx-act-cell">
         <textarea class="ts-input tsx-act" rows="1" placeholder="Activity…"
@@ -670,12 +683,14 @@ function buildRow(e, ts, editable) {
     return;
   }
 
-  if (!editable && me.role==='tech') {
+  if (!editable && usesDayGrid()) {
     tr.innerHTML = `
       <td class="ts-day-cell"><strong>${fmtD(e.date)}</strong><span class="ts-day-name">${e.date?DAYS[dow(e.date)]:''}</span></td>
       <td style="text-align:center">${fmt(e.workHrs||0)}</td>
       <td style="text-align:center">${fmt(e.sbHrs||0)}</td>
+      <td>${e.country||'–'}</td>
       <td>${e.customer||'–'}</td>
+      <td>${e.equipment||'–'}</td>
       <td class="tsx-act-cell">${e.description||'–'}</td>
       <td style="text-align:center">${e.nightHrs||'–'}</td>
       <td style="text-align:center">${e.nightOtHrs||'–'}</td>
@@ -913,7 +928,7 @@ function upd(tsId, entryId, field, val) {
   const e  = ts?.entries.find(x=>x.id===entryId);
   if (!e) return;
   e[field] = val;
-  if (me.role==='tech' && (field==='workHrs' || field==='sbHrs')) {
+  if (usesDayGrid() && (field==='workHrs' || field==='sbHrs')) {
     const err = splitRuleError(e);
     if (err) {
       e[field] = 0;                 // reset the offending value
