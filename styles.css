@@ -140,6 +140,16 @@ img { max-width: 100%; }
   opacity: 0.35;
 }
 
+/* Corner tricolour on login page */
+.login-corner-stripes {
+  position: absolute;
+  top: 1.1rem;
+  left: 1.4rem;
+  height: 20px;
+  width: auto;
+  z-index: 2;
+}
+
 /* ── Left branding panel ──────────────────────────────────── */
 .login-left {
   flex: 1;
@@ -1230,9 +1240,9 @@ img { max-width: 100%; }
   color: var(--text-secondary);
 }
 
-/* Allowances column width in the editable timesheet table */
-.ts-table th:nth-child(8),
-.ts-table td:nth-child(8) {
+/* Allowances column width in the editable timesheet table (manager/admin layout only) */
+.ts-table:not(.ts-table-tech) th:nth-child(8),
+.ts-table:not(.ts-table-tech) td:nth-child(8) {
   min-width: 190px;
 }
 
@@ -1265,9 +1275,50 @@ img { max-width: 100%; }
   .card { box-shadow: none; }
 }
 
-/* ── Tech full-month day grid ───────────────────────────────── */
+/* ── Tech full-month day grid (v2) ──────────────────────────── */
 .ts-day-cell { white-space: nowrap; }
-.ts-day-name { font-size: 0.73rem; color: var(--text-secondary); display: block; margin-top: 0.15rem; }
-.row-sunday td.ts-day-cell,
-.row-sunday td.ts-day-cell .ts-day-name,
-.row-sunday td.ts-day-cell strong { color: var(--red) !important; }
+.ts-day-name { font-size: 0.7rem; color: var(--text-secondary); display: block; margin-top: 0.1rem; }
+
+/* Sundays & public holidays: entire row text in red (incl. inputs) */
+.row-sunday td, .row-sunday td strong, .row-sunday .ts-day-name,
+.row-sunday .ts-input, .row-sunday select.ts-input,
+.row-holiday td, .row-holiday td strong, .row-holiday .ts-day-name,
+.row-holiday .ts-input, .row-holiday select.ts-input { color: var(--red) !important; }
+
+/* Tech table: red text is the highlight — no pink bg / left border */
+.ts-table-tech.ts-table tbody tr.row-holiday { background: transparent !important; }
+.ts-table-tech.ts-table .row-holiday td:first-child { border-left: none; }
+
+/* Compact tech layout */
+.ts-table-tech { min-width: 1150px; }
+.ts-table-tech thead th { font-size: 0.66rem; padding: 0.45rem 0.3rem; text-align: center; }
+.ts-table-tech tbody td { padding: 0.3rem 0.25rem; }
+.ts-table-tech .ts-input { padding: 0.35rem 0.4rem; font-size: 0.8rem; }
+.ts-table-tech .ts-day-cell { padding-left: 0.6rem; }
+.tsx-time   { width: 78px; }
+.tsx-loc    { width: 96px; }
+.tsx-act    { width: 100%; min-width: 220px; resize: vertical; min-height: 34px; line-height: 1.3; }
+td.tsx-act-cell { width: 100%; }
+.tsx-sm     { width: 58px; text-align: center; }
+.tsx-tp     { width: 76px; }
+.tsx-rem    { width: 130px; }
+.tsx-meal   { width: 56px; text-align: center; }
+.tsx-ot     { display: inline-flex; align-items: center; justify-content: center; min-width: 52px; padding: 0.3rem 0.4rem; border-radius: var(--r-sm); font-size: 0.78rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+/* Public holiday legend (fills the empty toolbar space) */
+.ts-ph-legend {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  padding: 0.45rem 0.9rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--r-full);
+  font-size: 0.78rem;
+  box-shadow: var(--shadow-xs);
+}
+.ts-ph-legend:empty { display: none; }
+.ts-ph-legend-title { font-weight: 700; color: var(--text-secondary); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em; }
+.ts-ph-item { display: inline-flex; align-items: center; gap: 0.3rem; color: var(--red); font-weight: 600; }
+.ts-ph-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--red); flex-shrink: 0; }

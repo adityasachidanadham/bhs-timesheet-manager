@@ -103,14 +103,25 @@ const holNm  = d => Store.publicHolidays.find(h => h.date === d)?.name || '';
 const userBy = id => Store.users.find(u => u.id === id);
 const isLeave= type => Store.leaveTypes.includes(type);
 
+const TIME_OPTS = Array.from({length:48},(_,i)=>`${String(Math.floor(i/2)).padStart(2,'0')}:${i%2?'30':'00'}`);
+function timeOptions(sel) {
+  return `<option value="">--:--</option>` + TIME_OPTS.map(t=>`<option value="${t}" ${sel===t?'selected':''}>${t}</option>`).join('');
+}
+function hoursFromTimes(from, to) {
+  if (!from || !to) return 0;
+  const [fh,fm]=from.split(':').map(Number), [th,tm]=to.split(':').map(Number);
+  let h = (th+tm/60)-(fh+fm/60);
+  if (h < 0) h += 24; // overnight shift
+  return Math.round(h*2)/2;
+}
+
 function calcOT(date, workHrs) {
   // OT is based on WORKING hours only; leave/standby hours excluded from OT
   const d = dow(date);
   const h = isHol(date);
   let reg=0, ot15=0, ot20=0;
   if (h || d===0) { ot20 = workHrs; }           // PH or Sunday → all OT2.0
-  else if (d===6) { reg=Math.min(workHrs,4); ot15=Math.max(0,workHrs-4); } // Saturday → 4 reg
-  else            { reg=Math.min(workHrs,8); ot15=Math.max(0,workHrs-8); } // Mon–Fri  → 8 reg
+  else            { reg=Math.min(workHrs,8); ot15=Math.max(0,workHrs-8); } // Mon–Sat → 8 reg then OT1.5
   return { reg, ot15, ot20 };
 }
 
@@ -339,6 +350,7 @@ function renderTs(el) {
         </select>
       </div>
       <div class="ts-summary" id="ts-summary"></div>
+      <div class="ts-ph-legend" id="ts-ph-legend"></div>
     </div>
     <div id="ts-alerts"></div>
     <div class="card">
@@ -347,8 +359,28 @@ function renderTs(el) {
         <div id="ts-actions" style="display:flex;gap:0.5rem;flex-wrap:wrap"></div>
       </div>
       <div class="ts-table-wrap">
-        <table class="apple-table ts-table" id="ts-tbl">
-          <thead><tr>
+        <table class="apple-table ts-table ${me.role==='tech'?'ts-table-tech':''}" id="ts-tbl">
+          <thead>${me.role==='tech'?`
+          <tr>
+            <th rowspan="2">Date</th>
+            <th rowspan="2">From</th>
+            <th rowspan="2">To</th>
+            <th rowspan="2">Location</th>
+            <th rowspan="2">Activity</th>
+            <th rowspan="2">Night Shift Hrs</th>
+            <th rowspan="2">Night Shift OT Hrs</th>
+            <th rowspan="2">OT Hrs</th>
+            <th rowspan="2">Meal Lunch</th>
+            <th rowspan="2">Meal Dinner</th>
+            <th colspan="3">Transport Claim</th>
+            <th rowspan="2">Remarks</th>
+          </tr>
+          <tr>
+            <th>From</th>
+            <th>To</th>
+            <th>Preapproved</th>
+          </tr>`:`
+          <tr>
             <th>Date</th>
             <th>Work Location</th>
             <th>Working Hrs</th>
@@ -360,7 +392,7 @@ function renderTs(el) {
             <th>OT 1.5×</th>
             <th>OT 2.0×</th>
             <th></th>
-          </tr></thead>
+          </tr>`}</thead>
           <tbody id="ts-body"></tbody>
         </table>
       </div>
@@ -390,12 +422,25 @@ function ensureTechMonth() {
   for (let d=1; d<=daysInMonth; d++) {
     const dateStr = `${tsYear}-${String(tsMonth).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
     if (!ts.entries.some(e => e.date === dateStr)) {
-      ts.entries.push({ id:Store.nextId.entry++, date:dateStr, customer:'', workHrs:0, sbHrs:0, sbType:'Standby', description:'', country:'', equipment:'', allowances:[], ot15:0, ot20:0 });
+      ts.entries.push({ id:Store.nextId.entry++, date:dateStr, customer:'', workHrs:0, sbHrs:0, sbType:'Standby', description:'', country:'', equipment:'', allowances:[], ot15:0, ot20:0, timeFrom:'', timeTo:'', nightHrs:0, nightOtHrs:0, mealLunch:0, mealDinner:0, tpFrom:'', tpTo:'', tpPre:'', remarks:'' });
     }
   }
   ts.entries.sort((a,b) => (a.date||'').localeCompare(b.date||''));
   recalcTs(ts);
   return ts;
+}
+
+// Public holiday legend for the selected month
+function renderPhLegend() {
+  const el = $('ts-ph-legend');
+  if (!el) return;
+  const mm = String(tsMonth).padStart(2,'0');
+  const hols = Store.publicHolidays
+    .filter(h => h.date.startsWith(`${tsYear}-${mm}`))
+    .sort((a,b)=>a.date.localeCompare(b.date));
+  if (!hols.length) { el.innerHTML=''; return; }
+  el.innerHTML = `<span class="ts-ph-legend-title">Public Holidays</span>` +
+    hols.map(h=>`<span class="ts-ph-item"><span class="ts-ph-dot"></span>${fmtD(h.date)} · ${h.name}</span>`).join('');
 }
 
 function loadTs() {
@@ -404,6 +449,7 @@ function loadTs() {
   const locked   = ts && (ts.status==='submitted' || ts.status==='approved');
 
   $('ts-title').textContent = `${MONTHS[tsMonth-1]} ${tsYear}`;
+  renderPhLegend();
   renderTsActions(ts, editable);
   renderTsSummary(ts);
   renderTsAlerts(ts);
@@ -496,7 +542,7 @@ function renderTsRows(ts, editable) {
   const body = $('ts-body');
   body.innerHTML = '';
   if (!ts || !ts.entries.length) {
-    body.innerHTML = `<tr><td colspan="11"><div class="empty"><div class="empty-ico">📋</div><p>No entries yet — click "Add Row" to begin</p></div></td></tr>`;
+    body.innerHTML = `<tr><td colspan="${me.role==='tech'?14:11}"><div class="empty"><div class="empty-ico">📋</div><p>No entries yet${me.role==='tech'?'':' — click "Add Row" to begin'}</p></div></td></tr>`;
     return;
   }
   ts.entries.forEach(e => buildRow(e, ts, editable));
@@ -510,55 +556,85 @@ function buildRow(e, ts, editable) {
   const dayInfo = e.date ? `${DAYS[dow(e.date)]}${isHol(e.date)?` · 🔴 ${holNm(e.date)}`:''}` : '';
 
   if (editable && me.role==='tech') {
+    // Ensure new fields exist (legacy demo rows)
+    ['timeFrom','timeTo','tpFrom','tpTo','tpPre','remarks'].forEach(k=>{ if(e[k]===undefined) e[k]=''; });
+    ['nightHrs','nightOtHrs','mealLunch','mealDinner'].forEach(k=>{ if(e[k]===undefined) e[k]=0; });
+    const dayShort = e.date ? DAYS[dow(e.date)] : '';
     tr.innerHTML = `
-      <td class="ts-day-cell"><strong>${fmtD(e.date)}</strong><span class="ts-day-name">${dayInfo}</span></td>
+      <td class="ts-day-cell"><strong>${fmtD(e.date)}</strong><span class="ts-day-name">${dayShort}</span></td>
       <td>
-        <select class="ts-input" onchange="upd(${ts.id},${e.id},'customer',this.value)">
-          <option value="">Select…</option>
-          ${Store.customers.map(c=>`<option value="${c}" ${e.customer===c?'selected':''}>${c}</option>`).join('')}
+        <select class="ts-input tsx-time" onchange="upd(${ts.id},${e.id},'timeFrom',this.value)">${timeOptions(e.timeFrom)}</select>
+      </td>
+      <td>
+        <select class="ts-input tsx-time" onchange="upd(${ts.id},${e.id},'timeTo',this.value)">${timeOptions(e.timeTo)}</select>
+      </td>
+      <td>
+        <input class="ts-input tsx-loc" type="text" value="${e.customer||''}" placeholder="Location"
+          onchange="upd(${ts.id},${e.id},'customer',this.value)">
+      </td>
+      <td class="tsx-act-cell">
+        <textarea class="ts-input tsx-act" rows="1" placeholder="Activity…"
+          onchange="upd(${ts.id},${e.id},'description',this.value)">${e.description||''}</textarea>
+      </td>
+      <td>
+        <input class="ts-input tsx-sm" type="number" min="0" max="24" step="0.5" value="${e.nightHrs||0}"
+          onchange="upd(${ts.id},${e.id},'nightHrs',parseFloat(this.value)||0)">
+      </td>
+      <td>
+        <input class="ts-input tsx-sm" type="number" min="0" max="24" step="0.5" value="${e.nightOtHrs||0}"
+          onchange="upd(${ts.id},${e.id},'nightOtHrs',parseFloat(this.value)||0)">
+      </td>
+      <td>
+        <div class="tsx-ot ${e.ot20>0?'ot-tag-20':'ot-tag-15'}" id="otx-${e.id}">${otDisplay(e)}</div>
+      </td>
+      <td>
+        <select class="ts-input tsx-meal" onchange="upd(${ts.id},${e.id},'mealLunch',parseInt(this.value)||0)">
+          <option value="0" ${!e.mealLunch?'selected':''}>–</option>
+          <option value="1" ${e.mealLunch===1?'selected':''}>1</option>
         </select>
       </td>
       <td>
-        <input class="ts-input ts-input-num" type="number" min="0" max="24" step="0.5" value="${e.workHrs||0}"
-          onchange="upd(${ts.id},${e.id},'workHrs',parseFloat(this.value)||0)">
-      </td>
-      <td>
-        <div class="ts-standby-cell">
-          <input class="ts-input ts-input-num ts-standby-hrs" type="number" min="0" max="24" step="0.5" value="${e.sbHrs||0}"
-            onchange="upd(${ts.id},${e.id},'sbHrs',parseFloat(this.value)||0)">
-          <select class="ts-input ts-standby-type" onchange="upd(${ts.id},${e.id},'sbType',this.value)">
-            ${Store.standbyTypes.map(t=>`<option value="${t}" ${e.sbType===t?'selected':''}>${t}</option>`).join('')}
-          </select>
-        </div>
-      </td>
-      <td>
-        <input class="ts-input" type="text" value="${e.description||''}" placeholder="Job description…"
-          onchange="upd(${ts.id},${e.id},'description',this.value)">
-      </td>
-      <td>
-        <select class="ts-input" onchange="upd(${ts.id},${e.id},'country',this.value)">
-          <option value="">Select…</option>
-          ${Store.countries.map(c=>`<option value="${c}" ${e.country===c?'selected':''}>${c}</option>`).join('')}
+        <select class="ts-input tsx-meal" onchange="upd(${ts.id},${e.id},'mealDinner',parseInt(this.value)||0)">
+          <option value="0" ${!e.mealDinner?'selected':''}>–</option>
+          <option value="1" ${e.mealDinner===1?'selected':''}>1</option>
         </select>
       </td>
       <td>
-        <select class="ts-input" onchange="upd(${ts.id},${e.id},'equipment',this.value)">
-          <option value="">Select…</option>
-          ${Store.equipment.map(t=>`<option value="${t}" ${e.equipment===t?'selected':''}>${t}</option>`).join('')}
-        </select>
+        <input class="ts-input tsx-tp" type="text" value="${e.tpFrom||''}" placeholder="From"
+          onchange="upd(${ts.id},${e.id},'tpFrom',this.value)">
       </td>
-      <td class="allow-cell">
-        <div class="allowance-dd" id="alw-${e.id}">
-          <button type="button" class="allowance-dd-toggle" id="alw-toggle-${e.id}"
-            onclick="toggleAllowanceDD(event, ${ts.id}, ${e.id})">
-            <span class="allowance-dd-label">${allowanceLabel(e.allowances)}</span>
-            <span class="allowance-dd-caret">▾</span>
-          </button>
-        </div>
+      <td>
+        <input class="ts-input tsx-tp" type="text" value="${e.tpTo||''}" placeholder="To"
+          onchange="upd(${ts.id},${e.id},'tpTo',this.value)">
       </td>
-      <td><div class="ts-ro ot-tag-15" id="ot15-${e.id}">${e.ot15>0?fmt(e.ot15)+'h':'–'}</div></td>
-      <td><div class="ts-ro ot-tag-20" id="ot20-${e.id}">${e.ot20>0?fmt(e.ot20)+'h':'–'}</div></td>
-      <td></td>`;
+      <td>
+        <input class="ts-input tsx-tp" type="text" value="${e.tpPre||''}" placeholder="Y/N"
+          onchange="upd(${ts.id},${e.id},'tpPre',this.value)">
+      </td>
+      <td>
+        <input class="ts-input tsx-rem" type="text" value="${e.remarks||''}" placeholder="Remarks"
+          onchange="upd(${ts.id},${e.id},'remarks',this.value)">
+      </td>`;
+    body.appendChild(tr);
+    return;
+  }
+
+  if (!editable && me.role==='tech') {
+    tr.innerHTML = `
+      <td class="ts-day-cell"><strong>${fmtD(e.date)}</strong><span class="ts-day-name">${e.date?DAYS[dow(e.date)]:''}</span></td>
+      <td>${e.timeFrom||'–'}</td>
+      <td>${e.timeTo||'–'}</td>
+      <td>${e.customer||'–'}</td>
+      <td class="tsx-act-cell">${e.description||'–'}</td>
+      <td style="text-align:center">${e.nightHrs||'–'}</td>
+      <td style="text-align:center">${e.nightOtHrs||'–'}</td>
+      <td><div class="tsx-ot ${e.ot20>0?'ot-tag-20':'ot-tag-15'}">${otDisplay(e)}</div></td>
+      <td style="text-align:center">${e.mealLunch?'1':'–'}</td>
+      <td style="text-align:center">${e.mealDinner?'1':'–'}</td>
+      <td>${e.tpFrom||'–'}</td>
+      <td>${e.tpTo||'–'}</td>
+      <td>${e.tpPre||'–'}</td>
+      <td>${e.remarks||'–'}</td>`;
     body.appendChild(tr);
     return;
   }
@@ -769,13 +845,25 @@ function refreshAllowanceUI(tsId, entryId) {
   renderTsSummary(ts);
 }
 
+function otDisplay(e) {
+  if (e.ot20>0) return fmt(e.ot20)+'h ×2.0';
+  if (e.ot15>0) return fmt(e.ot15)+'h ×1.5';
+  return '–';
+}
+
 function upd(tsId, entryId, field, val) {
   const ts = Store.timesheets.find(t=>t.id===tsId);
   const e  = ts?.entries.find(x=>x.id===entryId);
   if (!e) return;
   e[field] = val;
+  // Tech rows: derive working hours from the From/To times
+  if (field==='timeFrom' || field==='timeTo') {
+    e.workHrs = hoursFromTimes(e.timeFrom, e.timeTo);
+  }
   recalcTs(ts);
-  // Refresh OT display
+  // Refresh OT displays (tech combined cell + manager/admin split cells)
+  const ox=$(`otx-${entryId}`);
+  if (ox) { ox.textContent = otDisplay(e); ox.className = `tsx-ot ${e.ot20>0?'ot-tag-20':'ot-tag-15'}`; }
   const o15=$(`ot15-${entryId}`), o20=$(`ot20-${entryId}`);
   if (o15) o15.textContent = e.ot15>0?fmt(e.ot15)+'h':'–';
   if (o20) o20.textContent = e.ot20>0?fmt(e.ot20)+'h':'–';
