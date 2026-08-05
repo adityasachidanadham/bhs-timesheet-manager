@@ -369,6 +369,7 @@ function renderTs(el) {
             <th rowspan="2">Meal<br>Lunch</th>
             <th rowspan="2">Meal<br>Dinner</th>
             <th colspan="3">Transport Claim</th>
+            <th rowspan="2">Shift<br>Allowance</th>
             <th rowspan="2">Remarks</th>
           </tr>
           <tr>
@@ -418,7 +419,7 @@ function ensureTechMonth() {
   for (let d=1; d<=daysInMonth; d++) {
     const dateStr = `${tsYear}-${String(tsMonth).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
     if (!ts.entries.some(e => e.date === dateStr)) {
-      ts.entries.push({ id:Store.nextId.entry++, date:dateStr, customer:'', workHrs:0, sbHrs:0, sbType:'Standby', description:'', country:'', equipment:'', allowances:[], ot15:0, ot20:0, nightHrs:0, nightOtHrs:0, mealLunch:0, mealDinner:0, tpFrom:'', tpTo:'', tpPre:'', remarks:'' });
+      ts.entries.push({ id:Store.nextId.entry++, date:dateStr, customer:'', workHrs:0, sbHrs:0, sbType:'Standby', description:'', country:'', equipment:'', allowances:[], ot15:0, ot20:0, nightHrs:0, nightOtHrs:0, mealLunch:0, mealDinner:0, tpFrom:'', tpTo:'', tpPre:'', shiftAllowance:'', remarks:'' });
     }
   }
   ts.entries.sort((a,b) => (a.date||'').localeCompare(b.date||''));
@@ -515,17 +516,36 @@ function renderTsAlerts(ts) {
   }
 }
 
+let _errPopTimer = null;
+function showErrorPopup(msg) {
+  let ov = $('err-modal');
+  if (!ov) {
+    ov = document.createElement('div');
+    ov.className = 'overlay'; ov.id = 'err-modal';
+    ov.innerHTML = `
+      <div class="modal" style="max-width:420px">
+        <div class="modal-head"><h3>❌ Not Allowed</h3><button class="modal-x" onclick="closeOverlay('err-modal')">✕</button></div>
+        <div class="modal-body"><p id="err-msg" style="font-size:0.9rem;line-height:1.5"></p></div>
+      </div>`;
+    document.body.appendChild(ov);
+  }
+  $('err-msg').textContent = msg;
+  openOverlay('err-modal');
+  clearTimeout(_errPopTimer);
+  _errPopTimer = setTimeout(()=>closeOverlay('err-modal'), 10000);
+}
+
 function collectWarnings(ts) {
   const warnings = [];
   if (!ts) return warnings;
   // Deployed/Standby split rule
   ts.entries.forEach(e=>{ const err=splitRuleError(e); if (err) warnings.push(err); });
   const totalOT = ts.entries.reduce((s,e)=>s+(e.ot15||0)+(e.ot20||0),0);
-  if (totalOT>72) warnings.push(`Total OT (${fmt(totalOT)}h) exceeds the 72-hour monthly limit.`);
+  if (totalOT>72) warnings.push(`Total OT ${fmt(totalOT)}h — over the 72h monthly limit.`);
   // Daily minimum check
   const dayHrs = {};
   ts.entries.forEach(e=>{ if(e.date) dayHrs[e.date]=(dayHrs[e.date]||0)+(e.workHrs||0)+(e.sbHrs||0); });
-  Object.entries(dayHrs).forEach(([d,h])=>{ if(h<8&&h>0) warnings.push(`${fmtD(d)}: only ${fmt(h)}h entered (minimum 8h/day required).`); });
+  Object.entries(dayHrs).forEach(([d,h])=>{ if(h<8&&h>0) warnings.push(`${fmtD(d)}: only ${fmt(h)}h (min 8h/day).`); });
   // Weekly minimum
   const weekHrs = {};
   ts.entries.forEach(e=>{
@@ -534,7 +554,7 @@ function collectWarnings(ts) {
     const wk=`W${Math.ceil((dt.getDate()+new Date(dt.getFullYear(),dt.getMonth(),1).getDay())/7)}`;
     weekHrs[wk]=(weekHrs[wk]||0)+(e.workHrs||0)+(e.sbHrs||0);
   });
-  Object.entries(weekHrs).forEach(([w,h])=>{ if(h<44&&h>0) warnings.push(`${w}: ${fmt(h)}h total (minimum 44h/week required).`); });
+  Object.entries(weekHrs).forEach(([w,h])=>{ if(h<44&&h>0) warnings.push(`${w}: ${fmt(h)}h (min 44h/week).`); });
   return warnings;
 }
 
@@ -566,7 +586,7 @@ function renderTsRows(ts, editable) {
   const body = $('ts-body');
   body.innerHTML = '';
   if (!ts || !ts.entries.length) {
-    body.innerHTML = `<tr><td colspan="${me.role==='tech'?15:11}"><div class="empty"><div class="empty-ico">📋</div><p>No entries yet${me.role==='tech'?'':' — click "Add Row" to begin'}</p></div></td></tr>`;
+    body.innerHTML = `<tr><td colspan="${me.role==='tech'?16:11}"><div class="empty"><div class="empty-ico">📋</div><p>No entries yet${me.role==='tech'?'':' — click "Add Row" to begin'}</p></div></td></tr>`;
     return;
   }
   ts.entries.forEach(e => buildRow(e, ts, editable));
@@ -581,7 +601,7 @@ function buildRow(e, ts, editable) {
 
   if (editable && me.role==='tech') {
     // Ensure new fields exist (legacy demo rows)
-    ['tpFrom','tpTo','tpPre','remarks'].forEach(k=>{ if(e[k]===undefined) e[k]=''; });
+    ['tpFrom','tpTo','tpPre','shiftAllowance','remarks'].forEach(k=>{ if(e[k]===undefined) e[k]=''; });
     ['nightHrs','nightOtHrs','mealLunch','mealDinner'].forEach(k=>{ if(e[k]===undefined) e[k]=0; });
     const dayShort = e.date ? DAYS[dow(e.date)] : '';
     tr.innerHTML = `
@@ -635,12 +655,16 @@ function buildRow(e, ts, editable) {
           onchange="upd(${ts.id},${e.id},'tpTo',this.value)">
       </td>
       <td>
-        <input class="ts-input tsx-tp" type="text" value="${e.tpPre||''}" placeholder="Y/N"
+        <input class="ts-input tsx-tp" type="text" value="${e.tpPre||''}"
           onchange="upd(${ts.id},${e.id},'tpPre',this.value)">
       </td>
       <td>
-        <input class="ts-input tsx-rem" type="text" value="${e.remarks||''}" placeholder="Remarks"
-          onchange="upd(${ts.id},${e.id},'remarks',this.value)">
+        <input class="ts-input tsx-tp" type="text" value="${e.shiftAllowance||''}"
+          onchange="upd(${ts.id},${e.id},'shiftAllowance',this.value)">
+      </td>
+      <td>
+        <textarea class="ts-input tsx-rem" rows="1" placeholder="Remarks"
+          onchange="upd(${ts.id},${e.id},'remarks',this.value)">${e.remarks||''}</textarea>
       </td>`;
     body.appendChild(tr);
     return;
@@ -662,6 +686,7 @@ function buildRow(e, ts, editable) {
       <td>${e.tpFrom||'–'}</td>
       <td>${e.tpTo||'–'}</td>
       <td>${e.tpPre||'–'}</td>
+      <td>${e.shiftAllowance||'–'}</td>
       <td>${e.remarks||'–'}</td>`;
     body.appendChild(tr);
     return;
@@ -878,7 +903,7 @@ function refreshAllowanceUI(tsId, entryId) {
 function splitRuleError(e) {
   const wh = e.workHrs||0, sb = e.sbHrs||0;
   if (sb > 0 && (wh + sb) > 8) {
-    return `${fmtD(e.date)}: Deployed (${fmt(wh)}h) + Standby (${fmt(sb)}h) exceeds 8h. Standby does not count as OT — either split 8h between Deployed and Standby, or put all hours in Deployed if there is overtime.`;
+    return `${fmtD(e.date)}: Deployed + Standby over 8h. Put OT hours in Deployed only.`;
   }
   return null;
 }
@@ -890,7 +915,13 @@ function upd(tsId, entryId, field, val) {
   e[field] = val;
   if (me.role==='tech' && (field==='workHrs' || field==='sbHrs')) {
     const err = splitRuleError(e);
-    if (err) toast(err, 'error');
+    if (err) {
+      e[field] = 0;                 // reset the offending value
+      recalcTs(ts);
+      showErrorPopup(err);
+      loadTs();                     // redraw so the dropdown shows 0 again
+      return;
+    }
   }
   recalcTs(ts);
   const o15=$(`ot15-${entryId}`), o20=$(`ot20-${entryId}`);
