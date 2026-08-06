@@ -566,11 +566,13 @@ function buildRow(e, ts, editable) {
       </td>
       <td>
         <input class="ts-input tsx-sm" type="number" min="0" max="24" step="0.5" value="${e.nightHrs||0}"
-          onchange="upd(${ts.id},${e.id},'nightHrs',parseFloat(this.value)||0)">
+          onchange="this.value=parseFloat(this.value)||0;upd(${ts.id},${e.id},'nightHrs',parseFloat(this.value)||0)"
+          onblur="if(this.value==='')this.value=0">
       </td>
       <td>
         <input class="ts-input tsx-sm" type="number" min="0" max="24" step="0.5" value="${e.nightOtHrs||0}"
-          onchange="upd(${ts.id},${e.id},'nightOtHrs',parseFloat(this.value)||0)">
+          onchange="this.value=parseFloat(this.value)||0;upd(${ts.id},${e.id},'nightOtHrs',parseFloat(this.value)||0)"
+          onblur="if(this.value==='')this.value=0">
       </td>
       <td>
         <div class="tsx-ot ot-tag-15" id="ot15-${e.id}">${e.ot15>0?fmt(e.ot15)+'h':'–'}</div>
@@ -724,6 +726,7 @@ function renderApprovals(el) {
           ${[2024,2025,2026,2027].map(y=>`<option value="${y}" ${y===tsYear?'selected':''}>${y}</option>`).join('')}
         </select>
       </div>
+      ${me.role==='admin' ? `<button class="btn btn-primary" onclick="exportAllOT()">📊 Download All Employee OT (Excel)</button>` : ''}
     </div>
     <div class="card"><div class="table-scroll" id="apl-wrap"></div></div>
   `;
@@ -813,6 +816,38 @@ function reviewTotals(ts) {
     o15: ts.entries.reduce((s,e)=>s+(e.ot15||0),0),
     o20: ts.entries.reduce((s,e)=>s+(e.ot20||0),0),
   };
+}
+
+// HR: one-sheet Excel with every employee's OT summary for the selected period
+function exportAllOT() {
+  const m = parseInt($('apl-m')?.value)||tsMonth;
+  const y = parseInt($('apl-y')?.value)||tsYear;
+  const esc = v => String(v===undefined||v===null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const head = ['Employee Code','Employee Name','Tab name','OT1.5(Hr)','OT2(Hr)','Night shift hrs','Night shift OT hrs',
+                'No. of meal_lunch (Qty)','No. of meal_dinner (Qty)','INCENTIVE OT ($)','TRANSPORT ALLOWANCE (BUILD) ($)','PROJECT PAY ($)'];
+  const techs = Store.users.filter(u=>u.role==='tech' && u.active)
+    .sort((a,b)=>(a.team||'').localeCompare(b.team||'') || (a.empId||'').localeCompare(b.empId||''));
+  const rows = techs.map(u=>{
+    const ts = getTsFor(u.id, y, m);
+    if (ts) recalcTs(ts);
+    const sum = k => ts ? ts.entries.reduce((s,e)=>s+(e[k]||0),0) : 0;
+    return [u.empId||'', u.name||'', u.team||'', fmt(sum('ot15')), fmt(sum('ot20')),
+            fmt(sum('nightHrs')), fmt(sum('nightOtHrs')), sum('mealLunch'), sum('mealDinner'), '', '', ''];
+  });
+  let html = `<html xmlns:x="urn:schemas-microsoft-com:office:excel"><head><meta charset="UTF-8"></head><body>`;
+  html += `<table border="1">`;
+  html += `<tr><td colspan="12"><b>BHS Kinetic — All Employee OT Summary · ${MONTHS[m-1]} ${y} (${periodLabel(y, m)})</b></td></tr>`;
+  html += `<tr>${head.map(h=>`<th><b>${esc(h)}</b></th>`).join('')}</tr>`;
+  rows.forEach(r=>{ html += `<tr>${r.map(c=>`<td>${esc(c)}</td>`).join('')}</tr>`; });
+  html += `</table></body></html>`;
+  const blob = new Blob(['\ufeff'+html], {type:'application/vnd.ms-excel'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `All_Employee_OT_${MONTHS[m-1]}_${y}.xls`;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 500);
+  toast('All employee OT list exported 📊','success');
 }
 
 function exportExcel(tsId) {
@@ -1002,6 +1037,7 @@ function openReviewTab(tsId) {
       const e = ts.entries.find(x=>x.id===parseInt(inp.dataset.e));
       if (!e) return;
       const f = inp.dataset.f;
+      if (numeric.includes(f)) { inp.value = parseFloat(inp.value)||0; }   // erased box reverts to 0
       e[f] = numeric.includes(f) ? (parseFloat(inp.value)||0) : inp.value;
       recalcTs(ts);
       // refresh OT cells + header totals in the review tab
