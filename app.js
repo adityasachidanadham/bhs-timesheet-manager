@@ -125,15 +125,20 @@ const isHol  = d => Store.publicHolidays.some(h => h.date === d);
 const holNm  = d => Store.publicHolidays.find(h => h.date === d)?.name || '';
 const userBy = id => Store.users.find(u => u.id === id);
 const isLeave= type => Store.leaveTypes.includes(type);
+const escAttr = v => String(v===undefined||v===null?'':v).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 
 // Country dropdown for timesheet rows
 function countryOptions(sel) {
   return `<option value="">–</option>` + Store.countries.map(c=>`<option value="${c}" ${sel===c?'selected':''}>${c}</option>`).join('');
 }
 
-// Customer dropdown for timesheet rows
+// Customer dropdown for timesheet rows — includes a trailing "Other" option that
+// reveals a free-text box so a customer not in the list can be typed in.
 function customerOptions(sel) {
-  return `<option value="">–</option>` + Store.customers.map(c=>`<option value="${c}" ${sel===c?'selected':''}>${c}</option>`).join('');
+  const known = Store.customers.includes(sel);
+  return `<option value="">–</option>`
+    + Store.customers.map(c=>`<option value="${c}" ${sel===c?'selected':''}>${c}</option>`).join('')
+    + `<option value="__other__" ${sel && !known ? 'selected':''}>Other…</option>`;
 }
 
 // Equipment dropdown for timesheet rows
@@ -554,8 +559,12 @@ function buildRow(e, ts, editable) {
       <td>
         <select class="ts-input tsx-ctry" onchange="upd(${ts.id},${e.id},'country',this.value)">${countryOptions(e.country)}</select>
       </td>
-      <td>
-        <select class="ts-input tsx-ctry" onchange="upd(${ts.id},${e.id},'customer',this.value)">${customerOptions(e.customer)}</select>
+      <td class="tsx-ctry-cell">
+        <select class="ts-input tsx-ctry" onchange="handleCustomerSelect(${ts.id},${e.id},this)">${customerOptions(e.customer)}</select>
+        <input class="ts-input tsx-ctry-other" type="text" placeholder="Type customer name"
+          style="${(!e.customer || Store.customers.includes(e.customer)) ? 'display:none;' : ''}margin-top:0.35rem"
+          value="${(e.customer && !Store.customers.includes(e.customer)) ? escAttr(e.customer) : ''}"
+          onchange="upd(${ts.id},${e.id},'customer',this.value)">
       </td>
       <td>
         <select class="ts-input tsx-ctry" onchange="upd(${ts.id},${e.id},'equipment',this.value)">${equipmentOptions(e.equipment)}</select>
@@ -650,6 +659,20 @@ function splitRuleError(e) {
     return `${fmtD(e.date)}: Deployed + Standby over 8h. Put OT hours in Deployed only.`;
   }
   return null;
+}
+
+// Toggles the free-text "Other" box next to the Customer dropdown.
+function handleCustomerSelect(tsId, entryId, sel) {
+  const other = sel.parentElement.querySelector('.tsx-ctry-other');
+  if (sel.value === '__other__') {
+    other.style.display = '';
+    other.focus();
+    upd(tsId, entryId, 'customer', other.value.trim());
+  } else {
+    other.style.display = 'none';
+    other.value = '';
+    upd(tsId, entryId, 'customer', sel.value);
+  }
 }
 
 function upd(tsId, entryId, field, val) {
