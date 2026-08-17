@@ -127,24 +127,22 @@ const userBy = id => Store.users.find(u => u.id === id);
 const isLeave= type => Store.leaveTypes.includes(type);
 const escAttr = v => String(v===undefined||v===null?'':v).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 
-// Country dropdown for timesheet rows
-function countryOptions(sel) {
-  return `<option value="">–</option>` + Store.countries.map(c=>`<option value="${c}" ${sel===c?'selected':''}>${c}</option>`).join('');
-}
+// Dropdown lists for the "type your own" fields on the timesheet grid.
+// Each of country / customer / equipment can fall back to free text via
+// a trailing "Other…" option.
+const OTHER_FIELD_LISTS = { country: () => Store.countries, customer: () => Store.customers, equipment: () => Store.equipment };
 
-// Customer dropdown for timesheet rows — includes a trailing "Other" option that
-// reveals a free-text box so a customer not in the list can be typed in.
-function customerOptions(sel) {
-  const known = Store.customers.includes(sel);
+function otherFieldOptions(field, sel) {
+  const list = OTHER_FIELD_LISTS[field]();
+  const known = list.includes(sel);
   return `<option value="">–</option>`
-    + Store.customers.map(c=>`<option value="${c}" ${sel===c?'selected':''}>${c}</option>`).join('')
+    + list.map(c=>`<option value="${c}" ${sel===c?'selected':''}>${c}</option>`).join('')
     + `<option value="__other__" ${sel && !known ? 'selected':''}>Other…</option>`;
 }
 
-// Equipment dropdown for timesheet rows
-function equipmentOptions(sel) {
-  return `<option value="">–</option>` + Store.equipment.map(c=>`<option value="${c}" ${sel===c?'selected':''}>${c}</option>`).join('');
-}
+function countryOptions(sel)  { return otherFieldOptions('country', sel); }
+function customerOptions(sel) { return otherFieldOptions('customer', sel); }
+function equipmentOptions(sel){ return otherFieldOptions('equipment', sel); }
 
 // Numeric hours dropdown (0–16 in 0.5 steps)
 const HOUR_OPTS = Array.from({length:33},(_,i)=>i/2);
@@ -556,13 +554,9 @@ function buildRow(e, ts, editable) {
       <td>
         <select class="ts-input tsx-hrs" onchange="upd(${ts.id},${e.id},'sbHrs',parseFloat(this.value)||0)">${hourOptions(e.sbHrs)}</select>
       </td>
-      <td>
-        <select class="ts-input tsx-ctry" onchange="upd(${ts.id},${e.id},'country',this.value)">${countryOptions(e.country)}</select>
-      </td>
-      <td class="tsx-ctry-cell" id="ctry-cell-${e.id}">${customerCellHtml(ts, e)}</td>
-      <td>
-        <select class="ts-input tsx-ctry" onchange="upd(${ts.id},${e.id},'equipment',this.value)">${equipmentOptions(e.equipment)}</select>
-      </td>
+      <td class="tsx-ctry-cell" id="field-cell-country-${e.id}">${otherFieldCellHtml('country', ts, e)}</td>
+      <td class="tsx-ctry-cell" id="field-cell-customer-${e.id}">${otherFieldCellHtml('customer', ts, e)}</td>
+      <td class="tsx-ctry-cell" id="field-cell-equipment-${e.id}">${otherFieldCellHtml('equipment', ts, e)}</td>
       <td class="tsx-act-cell">
         <textarea class="ts-input tsx-act" rows="1" placeholder="Activity…"
           onchange="upd(${ts.id},${e.id},'description',this.value)">${e.description||''}</textarea>
@@ -658,49 +652,58 @@ function splitRuleError(e) {
 // Renders the Customer cell as either the dropdown, or (once "Other…" is
 // chosen, or the entry already holds a custom value) a text box with a small
 // arrow button to flip back to the dropdown.
-function customerCellHtml(ts, e) {
-  const inOtherMode = e._custOther === true || (e.customer && !Store.customers.includes(e.customer));
+// Renders one of the country / customer / equipment cells as either the
+// dropdown, or (once "Other…" is chosen, or the entry already holds a
+// custom value) a text box with a small arrow button to flip back.
+const OTHER_FIELD_PLACEHOLDERS = { country: 'Type country', customer: 'Type customer', equipment: 'Type equipment' };
+const OTHER_FIELD_FLAGS = { country: '_countryOther', customer: '_custOther', equipment: '_equipmentOther' };
+
+function otherFieldCellHtml(field, ts, e) {
+  const flag = OTHER_FIELD_FLAGS[field];
+  const list = OTHER_FIELD_LISTS[field]();
+  const inOtherMode = e[flag] === true || (e[field] && !list.includes(e[field]));
   if (inOtherMode) {
     return `
       <div class="tsx-ctry-otherwrap">
-        <input class="ts-input tsx-ctry-other" type="text" placeholder="Type customer"
-          value="${escAttr(e.customer)}"
-          onchange="upd(${ts.id},${e.id},'customer',this.value)">
+        <input class="ts-input tsx-ctry-other" type="text" placeholder="${OTHER_FIELD_PLACEHOLDERS[field]}"
+          value="${escAttr(e[field])}"
+          onchange="upd(${ts.id},${e.id},'${field}',this.value)">
         <button type="button" class="tsx-ctry-revert" title="Back to dropdown"
-          onclick="revertCustomerToDropdown(${ts.id},${e.id})">▾</button>
+          onclick="revertOtherField('${field}',${ts.id},${e.id})">▾</button>
       </div>`;
   }
-  return `<select class="ts-input tsx-ctry" onchange="handleCustomerSelect(${ts.id},${e.id},this)">${customerOptions(e.customer)}</select>`;
+  return `<select class="ts-input tsx-ctry" onchange="handleOtherFieldSelect('${field}',${ts.id},${e.id},this)">${otherFieldOptions(field, e[field])}</select>`;
 }
 
-function refreshCustomerCell(ts, e, focusInput) {
-  const cell = document.getElementById(`ctry-cell-${e.id}`);
+function refreshOtherFieldCell(field, ts, e, focusInput) {
+  const cell = document.getElementById(`field-cell-${field}-${e.id}`);
   if (!cell) return;
-  cell.innerHTML = customerCellHtml(ts, e);
+  cell.innerHTML = otherFieldCellHtml(field, ts, e);
   if (focusInput) cell.querySelector('.tsx-ctry-other')?.focus();
 }
 
-function handleCustomerSelect(tsId, entryId, sel) {
+function handleOtherFieldSelect(field, tsId, entryId, sel) {
   const ts = Store.timesheets.find(t=>t.id===tsId);
   const e  = ts?.entries.find(x=>x.id===entryId);
   if (!e) return;
+  const flag = OTHER_FIELD_FLAGS[field];
   if (sel.value === '__other__') {
-    e._custOther = true;
-    e.customer = '';
-    refreshCustomerCell(ts, e, true);
+    e[flag] = true;
+    e[field] = '';
+    refreshOtherFieldCell(field, ts, e, true);
   } else {
-    e._custOther = false;
-    e.customer = sel.value;
+    e[flag] = false;
+    e[field] = sel.value;
   }
 }
 
-function revertCustomerToDropdown(tsId, entryId) {
+function revertOtherField(field, tsId, entryId) {
   const ts = Store.timesheets.find(t=>t.id===tsId);
   const e  = ts?.entries.find(x=>x.id===entryId);
   if (!e) return;
-  e._custOther = false;
-  e.customer = '';
-  refreshCustomerCell(ts, e, false);
+  e[OTHER_FIELD_FLAGS[field]] = false;
+  e[field] = '';
+  refreshOtherFieldCell(field, ts, e, false);
 }
 
 function upd(tsId, entryId, field, val) {
