@@ -675,11 +675,22 @@ function otherFieldCellHtml(field, ts, e) {
   return `<select class="ts-input tsx-ctry" onchange="handleOtherFieldSelect('${field}',${ts.id},${e.id},this)">${otherFieldOptions(field, e[field])}</select>`;
 }
 
-function refreshOtherFieldCell(field, ts, e, focusInput) {
+function refreshOtherFieldCell(field, ts, e, focusInput, openSelect) {
   const cell = document.getElementById(`field-cell-${field}-${e.id}`);
   if (!cell) return;
   cell.innerHTML = otherFieldCellHtml(field, ts, e);
   if (focusInput) cell.querySelector('.tsx-ctry-other')?.focus();
+  if (openSelect) {
+    const sel = cell.querySelector('select');
+    if (sel) {
+      sel.focus();
+      // showPicker() opens the native dropdown immediately (Chrome/Edge 111+).
+      // Older browsers just get the focused select, which is a safe fallback.
+      if (typeof sel.showPicker === 'function') {
+        try { sel.showPicker(); } catch (err) { /* ignore unsupported/blocked cases */ }
+      }
+    }
+  }
 }
 
 function handleOtherFieldSelect(field, tsId, entryId, sel) {
@@ -703,7 +714,7 @@ function revertOtherField(field, tsId, entryId) {
   if (!e) return;
   e[OTHER_FIELD_FLAGS[field]] = false;
   e[field] = '';
-  refreshOtherFieldCell(field, ts, e, false);
+  refreshOtherFieldCell(field, ts, e, false, true);
 }
 
 function upd(tsId, entryId, field, val) {
