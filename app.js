@@ -559,13 +559,7 @@ function buildRow(e, ts, editable) {
       <td>
         <select class="ts-input tsx-ctry" onchange="upd(${ts.id},${e.id},'country',this.value)">${countryOptions(e.country)}</select>
       </td>
-      <td class="tsx-ctry-cell">
-        <select class="ts-input tsx-ctry" onchange="handleCustomerSelect(${ts.id},${e.id},this)">${customerOptions(e.customer)}</select>
-        <input class="ts-input tsx-ctry-other" type="text" placeholder="Type customer name"
-          style="${(!e.customer || Store.customers.includes(e.customer)) ? 'display:none;' : ''}margin-top:0.35rem"
-          value="${(e.customer && !Store.customers.includes(e.customer)) ? escAttr(e.customer) : ''}"
-          onchange="upd(${ts.id},${e.id},'customer',this.value)">
-      </td>
+      <td class="tsx-ctry-cell" id="ctry-cell-${e.id}">${customerCellHtml(ts, e)}</td>
       <td>
         <select class="ts-input tsx-ctry" onchange="upd(${ts.id},${e.id},'equipment',this.value)">${equipmentOptions(e.equipment)}</select>
       </td>
@@ -661,18 +655,52 @@ function splitRuleError(e) {
   return null;
 }
 
-// Toggles the free-text "Other" box next to the Customer dropdown.
-function handleCustomerSelect(tsId, entryId, sel) {
-  const other = sel.parentElement.querySelector('.tsx-ctry-other');
-  if (sel.value === '__other__') {
-    other.style.display = '';
-    other.focus();
-    upd(tsId, entryId, 'customer', other.value.trim());
-  } else {
-    other.style.display = 'none';
-    other.value = '';
-    upd(tsId, entryId, 'customer', sel.value);
+// Renders the Customer cell as either the dropdown, or (once "Other…" is
+// chosen, or the entry already holds a custom value) a text box with a small
+// arrow button to flip back to the dropdown.
+function customerCellHtml(ts, e) {
+  const inOtherMode = e._custOther === true || (e.customer && !Store.customers.includes(e.customer));
+  if (inOtherMode) {
+    return `
+      <div class="tsx-ctry-otherwrap">
+        <input class="ts-input tsx-ctry-other" type="text" placeholder="Type customer"
+          value="${escAttr(e.customer)}"
+          onchange="upd(${ts.id},${e.id},'customer',this.value)">
+        <button type="button" class="tsx-ctry-revert" title="Back to dropdown"
+          onclick="revertCustomerToDropdown(${ts.id},${e.id})">▾</button>
+      </div>`;
   }
+  return `<select class="ts-input tsx-ctry" onchange="handleCustomerSelect(${ts.id},${e.id},this)">${customerOptions(e.customer)}</select>`;
+}
+
+function refreshCustomerCell(ts, e, focusInput) {
+  const cell = document.getElementById(`ctry-cell-${e.id}`);
+  if (!cell) return;
+  cell.innerHTML = customerCellHtml(ts, e);
+  if (focusInput) cell.querySelector('.tsx-ctry-other')?.focus();
+}
+
+function handleCustomerSelect(tsId, entryId, sel) {
+  const ts = Store.timesheets.find(t=>t.id===tsId);
+  const e  = ts?.entries.find(x=>x.id===entryId);
+  if (!e) return;
+  if (sel.value === '__other__') {
+    e._custOther = true;
+    e.customer = '';
+    refreshCustomerCell(ts, e, true);
+  } else {
+    e._custOther = false;
+    e.customer = sel.value;
+  }
+}
+
+function revertCustomerToDropdown(tsId, entryId) {
+  const ts = Store.timesheets.find(t=>t.id===tsId);
+  const e  = ts?.entries.find(x=>x.id===entryId);
+  if (!e) return;
+  e._custOther = false;
+  e.customer = '';
+  refreshCustomerCell(ts, e, false);
 }
 
 function upd(tsId, entryId, field, val) {
