@@ -76,10 +76,12 @@ const Store = {
     { id:70, empId:'0860', name:'Muhammad Hasif Bin Abdul Rahman', username:'0860', password:'0860', role:'tech', team:'ASML', managerIds:[3,4], active:true },
     { id:71, empId:'0907', name:'Saranraj Ravi Sankar', username:'0907', password:'0907', role:'tech', team:'ASML', managerIds:[3,4], active:true },
   ],
-  teams: ['AMHS','ATTACHMENT','ASML'],
+  teams: ['AMHS','ATTACHMENT','ASML','Service Team'],
   countries:  ['Singapore','USA','Netherlands','China','Japan','Ireland','Taiwan','Korea','Israel'],
   customers:  ['HQ','Micron','GF','SSW','UMC','SOITEC','VSMC','STM','TSMC','Nearfield','Intel','ASML','Sony','YMTC','Samsung'],
   equipment:  ['G Series','SRC','NXT2050','NXT870B','PAS850C','NXT1950X','PAS450F','EUV PI SAG 70S','EUV MI FH13','EUV PI PEN2','EUV 2','EUV 3'],
+  machines:   ['123456789012','987654321098'],
+  leaveOptions: ['Annual Leave','Carry Forward Leave','Medical Leave','Birthday Leave','Hospitalisation Leave','Compassionate Leave','Unpaid Leave'],
   standbyTypes: ['Standby','Annual Leave','Medical','Off in Lieu','Carry Forward Leave','Birthday Leave','Unpaid Leave'],
   leaveTypes: ['Annual Leave','Medical','Off in Lieu','Carry Forward Leave','Birthday Leave','Unpaid Leave'],
   allowanceTypes: ['Meal Allowance','Transport Allowance','Shift Allowance','Project Allowance'],
@@ -112,6 +114,7 @@ let tsMonth = new Date().getMonth() + 1;
 let viewingTs = null;
 let rejectingTs = null;
 let overrideTsId = null, overrideEntryId = null;
+let anTrendView = 'month'; // 'week' or 'month' — Analytics OT trend chart toggle
 
 // ── Utils ────────────────────────────────────────────────────
 const $ = id => document.getElementById(id);
@@ -130,7 +133,7 @@ const escAttr = v => String(v===undefined||v===null?'':v).replace(/&/g,'&amp;').
 // Dropdown lists for the "type your own" fields on the timesheet grid.
 // Each of country / customer / equipment can fall back to free text via
 // a trailing "Other…" option.
-const OTHER_FIELD_LISTS = { country: () => Store.countries, customer: () => Store.customers, equipment: () => Store.equipment };
+const OTHER_FIELD_LISTS = { country: () => Store.countries, customer: () => Store.customers, equipment: () => Store.equipment, machine: () => Store.machines };
 
 function otherFieldOptions(field, sel) {
   const list = OTHER_FIELD_LISTS[field]();
@@ -143,6 +146,13 @@ function otherFieldOptions(field, sel) {
 function countryOptions(sel)  { return otherFieldOptions('country', sel); }
 function customerOptions(sel) { return otherFieldOptions('customer', sel); }
 function equipmentOptions(sel){ return otherFieldOptions('equipment', sel); }
+function machineOptions(sel)  { return otherFieldOptions('machine', sel); }
+
+// Fixed enumerated dropdown for the "Leave" column (no free-text "Other…")
+function leaveOptions(sel) {
+  return `<option value="">–</option>`
+    + Store.leaveOptions.map(c=>`<option value="${c}" ${sel===c?'selected':''}>${c}</option>`).join('');
+}
 
 // Numeric hours dropdown (0–16 in 0.5 steps)
 const HOUR_OPTS = Array.from({length:33},(_,i)=>i/2);
@@ -310,6 +320,8 @@ function renderTs(el) {
             <th rowspan="2">Country</th>
             <th rowspan="2">Customer</th>
             <th rowspan="2">EQ</th>
+            <th rowspan="2">Machine<br>Number</th>
+            <th rowspan="2">Leave</th>
             <th rowspan="2">Activity</th>
             <th rowspan="2">Night<br>Shift Hrs</th>
             <th rowspan="2">Night<br>Shift OT</th>
@@ -395,7 +407,7 @@ function ensureTechMonth() {
   }
   periodDates(tsYear, tsMonth).forEach(dateStr => {
     if (!ts.entries.some(e => e.date === dateStr)) {
-      ts.entries.push({ id:Store.nextId.entry++, date:dateStr, customer:'', workHrs:0, sbHrs:0, sbType:'Standby', description:'', country:'', equipment:'', allowances:[], ot15:0, ot20:0, nightHrs:0, nightOtHrs:0, mealLunch:0, mealDinner:0, tpFrom:'', tpTo:'', tpPre:'', shiftAllowance:'', remarks:'' });
+      ts.entries.push({ id:Store.nextId.entry++, date:dateStr, customer:'', workHrs:0, sbHrs:0, sbType:'Standby', description:'', country:'', equipment:'', machine:'', leave:'', allowances:[], ot15:0, ot20:0, nightHrs:0, nightOtHrs:0, mealLunch:0, mealDinner:0, tpFrom:'', tpTo:'', tpPre:'', shiftAllowance:'', remarks:'' });
     }
   });
   ts.entries.sort((a,b) => (a.date||'').localeCompare(b.date||''));
@@ -528,7 +540,7 @@ function renderTsRows(ts, editable) {
   const body = $('ts-body');
   body.innerHTML = '';
   if (!ts || !ts.entries.length) {
-    body.innerHTML = `<tr><td colspan="18"><div class="empty"><div class="empty-ico">📋</div><p>No entries yet</p></div></td></tr>`;
+    body.innerHTML = `<tr><td colspan="20"><div class="empty"><div class="empty-ico">📋</div><p>No entries yet</p></div></td></tr>`;
     return;
   }
   ts.entries.forEach(e => buildRow(e, ts, editable));
@@ -543,7 +555,7 @@ function buildRow(e, ts, editable) {
 
   if (editable && usesDayGrid()) {
     // Ensure new fields exist (legacy demo rows)
-    ['tpFrom','tpTo','tpPre','shiftAllowance','remarks'].forEach(k=>{ if(e[k]===undefined) e[k]=''; });
+    ['tpFrom','tpTo','tpPre','shiftAllowance','remarks','machine','leave'].forEach(k=>{ if(e[k]===undefined) e[k]=''; });
     ['nightHrs','nightOtHrs','mealLunch','mealDinner'].forEach(k=>{ if(e[k]===undefined) e[k]=0; });
     const dayShort = e.date ? DAYS[dow(e.date)] : '';
     tr.innerHTML = `
@@ -557,6 +569,10 @@ function buildRow(e, ts, editable) {
       <td class="tsx-ctry-cell" id="field-cell-country-${e.id}">${otherFieldCellHtml('country', ts, e)}</td>
       <td class="tsx-ctry-cell" id="field-cell-customer-${e.id}">${otherFieldCellHtml('customer', ts, e)}</td>
       <td class="tsx-ctry-cell" id="field-cell-equipment-${e.id}">${otherFieldCellHtml('equipment', ts, e)}</td>
+      <td class="tsx-ctry-cell" id="field-cell-machine-${e.id}">${otherFieldCellHtml('machine', ts, e)}</td>
+      <td>
+        <select class="ts-input tsx-ctry" onchange="upd(${ts.id},${e.id},'leave',this.value)">${leaveOptions(e.leave)}</select>
+      </td>
       <td class="tsx-act-cell">
         <textarea class="ts-input tsx-act" rows="1" placeholder="Activity…"
           onchange="upd(${ts.id},${e.id},'description',this.value)">${e.description||''}</textarea>
@@ -621,6 +637,8 @@ function buildRow(e, ts, editable) {
       <td>${e.country||'–'}</td>
       <td>${e.customer||'–'}</td>
       <td>${e.equipment||'–'}</td>
+      <td>${e.machine||'–'}</td>
+      <td>${e.leave||'–'}</td>
       <td class="tsx-act-cell">${e.description||'–'}</td>
       <td style="text-align:center">${e.nightHrs||'–'}</td>
       <td style="text-align:center">${e.nightOtHrs||'–'}</td>
@@ -655,8 +673,8 @@ function splitRuleError(e) {
 // Renders one of the country / customer / equipment cells as either the
 // dropdown, or (once "Other…" is chosen, or the entry already holds a
 // custom value) a text box with a small arrow button to flip back.
-const OTHER_FIELD_PLACEHOLDERS = { country: 'Type country', customer: 'Type customer', equipment: 'Type equipment' };
-const OTHER_FIELD_FLAGS = { country: '_countryOther', customer: '_custOther', equipment: '_equipmentOther' };
+const OTHER_FIELD_PLACEHOLDERS = { country: 'Type country', customer: 'Type customer', equipment: 'Type equipment', machine: 'Type machine number' };
+const OTHER_FIELD_FLAGS = { country: '_countryOther', customer: '_custOther', equipment: '_equipmentOther', machine: '_machineOther' };
 
 function otherFieldCellHtml(field, ts, e) {
   const flag = OTHER_FIELD_FLAGS[field];
@@ -849,9 +867,10 @@ function reviewRowHtml(e) {
   const hol = isHol(e.date);
   const cls = [hol?'row-holiday':'', sunday?'row-sunday':''].filter(Boolean).join(' ');
   const dayShort = e.date ? DAYS[dow(e.date)] : '';
-  ['tpFrom','tpTo','tpPre','shiftAllowance','remarks'].forEach(k=>{ if(e[k]===undefined) e[k]=''; });
+  ['tpFrom','tpTo','tpPre','shiftAllowance','remarks','machine','leave'].forEach(k=>{ if(e[k]===undefined) e[k]=''; });
   ['nightHrs','nightOtHrs','mealLunch','mealDinner'].forEach(k=>{ if(e[k]===undefined) e[k]=0; });
   const inp = (f, extra, val) => `<input class="ts-input ${extra}" type="text" data-e="${e.id}" data-f="${f}" value="${val||''}">`;
+  const leaveSelect = sel => `<option value="">–</option>` + Store.leaveOptions.map(c=>`<option value="${c}" ${sel===c?'selected':''}>${c}</option>`).join('');
   return `<tr class="${cls}">
     <td class="ts-day-cell"><strong>${fmtD(e.date)}</strong><span class="ts-day-name">${dayShort}</span></td>
     <td><select class="ts-input tsx-hrs" data-e="${e.id}" data-f="workHrs">${reviewHourOptions(e.workHrs)}</select></td>
@@ -859,6 +878,8 @@ function reviewRowHtml(e) {
     <td><select class="ts-input tsx-ctry" data-e="${e.id}" data-f="country">${countryOptions(e.country)}</select></td>
     <td><select class="ts-input tsx-ctry" data-e="${e.id}" data-f="customer">${customerOptions(e.customer)}</select></td>
     <td><select class="ts-input tsx-ctry" data-e="${e.id}" data-f="equipment">${equipmentOptions(e.equipment)}</select></td>
+    <td><select class="ts-input tsx-ctry" data-e="${e.id}" data-f="machine">${machineOptions(e.machine)}</select></td>
+    <td><select class="ts-input tsx-ctry" data-e="${e.id}" data-f="leave">${leaveSelect(e.leave)}</select></td>
     <td class="tsx-act-cell"><textarea class="ts-input tsx-act" rows="1" data-e="${e.id}" data-f="description">${e.description||''}</textarea></td>
     <td><input class="ts-input tsx-sm" type="number" min="0" max="24" step="0.5" data-e="${e.id}" data-f="nightHrs" value="${e.nightHrs||0}"></td>
     <td><input class="ts-input tsx-sm" type="number" min="0" max="24" step="0.5" data-e="${e.id}" data-f="nightOtHrs" value="${e.nightOtHrs||0}"></td>
@@ -921,20 +942,20 @@ function exportExcel(tsId) {
   recalcTs(ts);
   const u = userBy(ts.userId);
   const esc = v => String(v===undefined||v===null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-  const head = ['Date','Day','Deployed Hrs','Standby Hrs','Country','Customer','EQ','Activity',
+  const head = ['Date','Day','Deployed Hrs','Standby Hrs','Country','Customer','EQ','Machine Number','Leave','Activity',
                 'Night Shift Hrs','Night Shift OT Hrs','OT 1.5x','OT 2.0x','Meal Lunch','Meal Dinner',
                 'Transport From','Transport To','Transport Preapproved','Shift Allowance','Remarks'];
   const rows = ts.entries.map(e=>[
     e.date||'', e.date?DAYS[dow(e.date)]:'', e.workHrs||0, e.sbHrs||0,
-    e.country||'', e.customer||'', e.equipment||'', e.description||'',
+    e.country||'', e.customer||'', e.equipment||'', e.machine||'', e.leave||'', e.description||'',
     e.nightHrs||0, e.nightOtHrs||0, e.ot15||0, e.ot20||0,
     e.mealLunch||0, e.mealDinner||0, e.tpFrom||'', e.tpTo||'', e.tpPre||'', e.shiftAllowance||'', e.remarks||''
   ]);
   const t = reviewTotals(ts);
   let html = `<html xmlns:x="urn:schemas-microsoft-com:office:excel"><head><meta charset="UTF-8"></head><body>`;
   html += `<table border="1">`;
-  html += `<tr><td colspan="19"><b>BHS Kinetic — Timesheet · ${esc(u?.name)} (${esc(u?.empId)}) · ${MONTHS[ts.month-1]} ${ts.year} (${periodLabel(ts.year, ts.month)}) · Status: ${esc(ts.status.toUpperCase())}</b></td></tr>`;
-  html += `<tr><td colspan="19">Deployed: ${fmt(t.dep)}h · Standby: ${fmt(t.sb)}h · OT1.5: ${fmt(t.o15)}h · OT2.0: ${fmt(t.o20)}h</td></tr>`;
+  html += `<tr><td colspan="21"><b>BHS Kinetic — Timesheet · ${esc(u?.name)} (${esc(u?.empId)}) · ${MONTHS[ts.month-1]} ${ts.year} (${periodLabel(ts.year, ts.month)}) · Status: ${esc(ts.status.toUpperCase())}</b></td></tr>`;
+  html += `<tr><td colspan="21">Deployed: ${fmt(t.dep)}h · Standby: ${fmt(t.sb)}h · OT1.5: ${fmt(t.o15)}h · OT2.0: ${fmt(t.o20)}h</td></tr>`;
   html += `<tr>${head.map(h=>`<th><b>${h}</b></th>`).join('')}</tr>`;
   rows.forEach(r=>{ html += `<tr>${r.map(c=>`<td>${esc(c)}</td>`).join('')}</tr>`; });
   html += `</table></body></html>`;
@@ -963,7 +984,7 @@ function openPrintTab(tsId) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <base href="${document.baseURI}">
     <title>Timesheet — ${u?.name} · ${MONTHS[ts.month-1]} ${ts.year}</title>
-    <link rel="stylesheet" href="styles.css?v=27">
+    <link rel="stylesheet" href="styles.css?v=28">
     </head><body style="background:#fff">
     <div class="page-wrap">
       <div class="sec-header">
@@ -982,6 +1003,7 @@ function openPrintTab(tsId) {
           <tr>
             <th rowspan="2">Date</th><th rowspan="2">Deployed<br>Hrs</th><th rowspan="2">Standby<br>Hrs</th>
             <th rowspan="2">Country</th><th rowspan="2">Customer</th><th rowspan="2">EQ</th>
+            <th rowspan="2">Machine<br>Number</th><th rowspan="2">Leave</th>
             <th rowspan="2">Activity</th><th rowspan="2">Night<br>Shift Hrs</th><th rowspan="2">Night<br>Shift OT</th>
             <th rowspan="2">OT<br>1.5×</th><th rowspan="2">OT<br>2.0×</th>
             <th rowspan="2">Meal<br>Lunch</th><th rowspan="2">Meal<br>Dinner</th>
@@ -997,6 +1019,7 @@ function openPrintTab(tsId) {
               <td style="text-align:center">${fmt(e.workHrs||0)}</td>
               <td style="text-align:center">${fmt(e.sbHrs||0)}</td>
               <td>${cell(e.country)}</td><td>${cell(e.customer)}</td><td>${cell(e.equipment)}</td>
+              <td>${cell(e.machine)}</td><td>${cell(e.leave)}</td>
               <td>${cell(e.description)}</td>
               <td style="text-align:center">${e.nightHrs||'–'}</td>
               <td style="text-align:center">${e.nightOtHrs||'–'}</td>
@@ -1021,7 +1044,7 @@ function openReviewTab(tsId) {
   // Fill any missing days so the review mirrors the employee's period grid (16th → 15th)
   periodDates(ts.year, ts.month).forEach(dateStr => {
     if (!ts.entries.some(e => e.date === dateStr)) {
-      ts.entries.push({ id:Store.nextId.entry++, date:dateStr, customer:'', workHrs:0, sbHrs:0, sbType:'Standby', description:'', country:'', equipment:'', allowances:[], ot15:0, ot20:0, nightHrs:0, nightOtHrs:0, mealLunch:0, mealDinner:0, tpFrom:'', tpTo:'', tpPre:'', shiftAllowance:'', remarks:'' });
+      ts.entries.push({ id:Store.nextId.entry++, date:dateStr, customer:'', workHrs:0, sbHrs:0, sbType:'Standby', description:'', country:'', equipment:'', machine:'', leave:'', allowances:[], ot15:0, ot20:0, nightHrs:0, nightOtHrs:0, mealLunch:0, mealDinner:0, tpFrom:'', tpTo:'', tpPre:'', shiftAllowance:'', remarks:'' });
     }
   });
   ts.entries.sort((a,b) => (a.date||'').localeCompare(b.date||''));
@@ -1037,7 +1060,7 @@ function openReviewTab(tsId) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <base href="${document.baseURI}">
     <title>Review — ${u?.name} · ${MONTHS[ts.month-1]} ${ts.year}</title>
-    <link rel="stylesheet" href="styles.css?v=27">
+    <link rel="stylesheet" href="styles.css?v=28">
     </head><body style="background:var(--bg)">
     <div class="page-wrap">
       <div class="sec-header">
@@ -1076,6 +1099,8 @@ function openReviewTab(tsId) {
             <th rowspan="2">Country</th>
             <th rowspan="2">Customer</th>
             <th rowspan="2">EQ</th>
+            <th rowspan="2">Machine<br>Number</th>
+            <th rowspan="2">Leave</th>
             <th rowspan="2">Activity</th>
             <th rowspan="2">Night<br>Shift Hrs</th>
             <th rowspan="2">Night<br>Shift OT</th>
@@ -1195,6 +1220,73 @@ function anMonthChanged() {
   redrawAnalytics();
 }
 
+// OT trend data — compare by Month (across the selected year) or by Week (within the selected month)
+function computeTrendData() {
+  const yF = parseInt($('an-y')?.value) || tsYear;
+  let scopeAll = Store.timesheets.filter(t=>t.status!=='draft' && t.year===yF);
+  if (me.role==='manager') { const team=teamUsers().map(u=>u.id); scopeAll=scopeAll.filter(t=>team.includes(t.userId)); }
+
+  if (anTrendView === 'month') {
+    return MONTHS.map((name,i)=>{
+      const m = i+1;
+      const entries = scopeAll.filter(t=>t.month===m).flatMap(t=>t.entries);
+      return { label: name.slice(0,3), ot15: entries.reduce((s,e)=>s+(e.ot15||0),0), ot20: entries.reduce((s,e)=>s+(e.ot20||0),0) };
+    });
+  }
+  const mF = parseInt($('an-m')?.value) || tsMonth;
+  const range = periodDates(yF, mF);
+  const weeksCount = Math.ceil(range.length/7);
+  const entries = scopeAll.filter(t=>t.month===mF).flatMap(t=>t.entries);
+  const data = [];
+  for (let w=1; w<=weeksCount; w++) {
+    const wEntries = entries.filter(e=>e.date && periodWeek(e.date, yF, mF)===w);
+    data.push({ label:`Wk ${w}`, ot15: wEntries.reduce((s,e)=>s+(e.ot15||0),0), ot20: wEntries.reduce((s,e)=>s+(e.ot20||0),0) });
+  }
+  return data;
+}
+
+function setAnTrendView(v) { anTrendView = v; redrawAnalytics(); }
+
+function trendChartHtml() {
+  const data = computeTrendData();
+  const max = Math.max(...data.map(d=>d.ot15+d.ot20), 1);
+  const yF = parseInt($('an-y')?.value) || tsYear;
+  const mF = parseInt($('an-m')?.value) || tsMonth;
+  const subtitle = anTrendView==='month' ? `Calendar year ${yF}` : `Weeks within ${MONTHS[mF-1]} ${yF} · ${periodLabel(yF, mF)}`;
+  const BAR_MAX = 170;
+  return `
+    <div class="card an-card an-trend-card">
+      <div class="an-card-head">
+        <h3>OT Trend — by ${anTrendView==='month'?'Month':'Week'}</h3>
+        <div style="display:flex;align-items:center;gap:0.9rem;flex-wrap:wrap">
+          <div class="an-mini-legend"><span class="an-dot" style="background:var(--ot15)"></span>1.5×<span class="an-dot" style="background:var(--ot20);margin-left:0.6rem"></span>2.0×</div>
+          <div class="an-trend-toggle">
+            <button class="an-trend-btn ${anTrendView==='week'?'active':''}" onclick="setAnTrendView('week')">Week</button>
+            <button class="an-trend-btn ${anTrendView==='month'?'active':''}" onclick="setAnTrendView('month')">Month</button>
+          </div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="td-muted" style="font-size:0.78rem;margin-bottom:0.9rem">${subtitle}</div>
+        <div class="an-trend-chart">
+          ${data.map(d=>{
+            const tot = d.ot15+d.ot20;
+            const h15 = max ? (d.ot15/max)*BAR_MAX : 0;
+            const h20 = max ? (d.ot20/max)*BAR_MAX : 0;
+            return `<div class="an-trend-col" title="${d.label}: ${fmt(tot)}h total (1.5× ${fmt(d.ot15)}h, 2.0× ${fmt(d.ot20)}h)">
+              <div class="an-trend-val">${tot>0?fmt(tot)+'h':''}</div>
+              <div class="an-trend-bar-wrap" style="height:${BAR_MAX}px">
+                <div class="an-trend-seg an-trend-seg-20" style="height:${h20}px"></div>
+                <div class="an-trend-seg an-trend-seg-15" style="height:${h15}px"></div>
+              </div>
+              <div class="an-trend-lbl">${d.label}</div>
+            </div>`;
+          }).join('')}
+        </div>
+      </div>
+    </div>`;
+}
+
 function redrawAnalytics() {
   const mF=parseInt($('an-m')?.value)||null;
   const yF=parseInt($('an-y')?.value)||null;
@@ -1254,6 +1346,7 @@ function redrawAnalytics() {
       <div class="an-kpi-div"></div>
       <div class="an-kpi-item"><div class="an-kpi-lbl">Employees with OT</div><div class="an-kpi-val" style="color:var(--bhs-blue-mid)">${empWithOT.length} of ${totalTechs}</div></div>
     </div>
+    ${trendChartHtml()}
     <div class="an-cards3">
       ${barCard('By Country', byCountry, maxC)}
       ${barCard('By Customer', byCustomer, maxCu)}
@@ -1384,6 +1477,10 @@ function adminTab(tab, btn) {
         <div class="card"><div class="card-head"><h3>Equipment (EQ)</h3></div><div class="card-body">
           <ul class="master-items" id="ml-equipment">${masterList('equipment')}</ul>
           <div class="add-item-bar"><input type="text" id="mi-equipment" placeholder="Add equipment…"><button class="btn btn-primary btn-sm" onclick="addMI('equipment','mi-equipment','ml-equipment')">Add</button></div>
+        </div></div>
+        <div class="card"><div class="card-head"><h3>Machine Numbers</h3></div><div class="card-body">
+          <ul class="master-items" id="ml-machines">${masterList('machines')}</ul>
+          <div class="add-item-bar"><input type="text" id="mi-machines" placeholder="Add 12-digit machine number…" maxlength="12"><button class="btn btn-primary btn-sm" onclick="addMI('machines','mi-machines','ml-machines')">Add</button></div>
         </div></div>
       </div>`;
   } else {
@@ -1581,7 +1678,7 @@ function seedMockData() {
           ctry = rnd()<0.9  ? mainLoc  : pickLoc();
         }
         return { id:Store.nextId.entry++, date:dateStr, customer:cust, workHrs, sbHrs, sbType:'Standby',
-                 description:desc, country:ctry, equipment:eq, allowances:[], ot15:0, ot20:0,
+                 description:desc, country:ctry, equipment:eq, machine:'', leave:'', allowances:[], ot15:0, ot20:0,
                  nightHrs, nightOtHrs, mealLunch:mealL, mealDinner:mealD,
                  tpFrom: working && rnd()<0.25 ? 'Home' : '', tpTo: working && rnd()<0.25 ? 'Fab' : '',
                  tpPre:'', shiftAllowance: nightHrs>0 ? '30' : '', remarks:'' };

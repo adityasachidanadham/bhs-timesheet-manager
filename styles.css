@@ -1513,6 +1513,51 @@ td.tsx-act-cell { width: 100%; }
 .an-share-track { height: 12px; }
 .an-top-row { background: var(--ot15-bg) !important; }
 
+/* ── Analytics: OT Trend chart (Week / Month toggle) ────────────── */
+.an-trend-card { margin-bottom: 1.25rem; }
+.an-trend-toggle { display: flex; gap: 0.2rem; padding: 0.2rem; background: var(--bg); border-radius: var(--r-sm); }
+.an-trend-btn {
+  padding: 0.32rem 0.75rem;
+  border-radius: 7px;
+  background: none;
+  border: none;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--dur-fast) var(--ease);
+}
+.an-trend-btn.active { background: var(--bg-card); color: var(--bhs-blue-mid); box-shadow: var(--shadow-xs); }
+.an-trend-btn:hover:not(.active) { color: var(--text-primary); }
+.an-trend-chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 1.1rem;
+  overflow-x: auto;
+  padding: 0.4rem 0.2rem 0.2rem;
+}
+.an-trend-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 46px;
+  flex: 1 0 auto;
+}
+.an-trend-val { font-size: 0.74rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.3rem; font-variant-numeric: tabular-nums; min-height: 1em; }
+.an-trend-bar-wrap {
+  width: 26px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  background: var(--bg);
+  border-radius: 6px 6px 3px 3px;
+  overflow: hidden;
+}
+.an-trend-seg { width: 100%; }
+.an-trend-seg-15 { background: linear-gradient(0deg, #fdba74, #f97316); }
+.an-trend-seg-20 { background: linear-gradient(0deg, #fca5a5, #ef4444); }
+.an-trend-lbl { font-size: 0.72rem; font-weight: 600; color: var(--text-secondary); margin-top: 0.5rem; white-space: nowrap; }
+
 @media (max-width: 1100px) {
   .an-cards3 { grid-template-columns: 1fr; }
 }
